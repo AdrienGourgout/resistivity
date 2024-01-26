@@ -1,0 +1,155 @@
+from time import sleep, time
+from resistivity.Driver.SR830 import device
+from resistivity.Driver.temperature_controllers import TemperatureController
+import numpy as np
+import threading
+import pyqtgraph as pg
+import random
+import yaml
+
+
+
+
+
+class Resistivity:
+
+    def __init__ (self, config_file):
+        self.config_file = config_file
+        self.temperature_log = np.empty(0)
+        self.data_log = np.empty(0)
+        self.exptime = np.empty(0)
+        self.keep_running = True
+        # load config file with yaml
+
+    def load_config(self):
+        with open(self.config_file, 'r') as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        self.config = data
+
+    def load_instruments(self):
+        self.lockin = device(self.config['Lockin']['port'])
+        self.tempctrl = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=self.config['LS350']['ip_address'], tcp_port=self.config['LS350']['tcp_port'])
+
+
+#       Logs
+        
+
+    def get_log_values(self):
+        while self.keep_running == True:
+
+            self.temp=self.tempctrl.get_kelvin_reading(1)
+            self.voltage=self.lockin.get_X()
+            self.t=time()
+
+            # self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
+            self.temperature_log = np.append(self.temperature_log, random.randint(0,100), axis=None)
+            self.data_log = np.append(self.data_log, self.voltage, axis=None)
+            self.exptime = np.append(self.exptime, self.t, axis=None)
+
+            
+            sleep(0.3)
+
+    def start_logging(self):
+        self.keep_running = True
+        self.log_thread = threading.Thread(target=self.get_log_values)
+        self.log_thread.start()
+
+
+    def stop_logging(self):
+        self.keep_running = False
+
+    def clear_log(self):
+        self.temperature_log = np.empty(0)
+        self.data_log = np.empty(0)
+        self.exptime = np.empty(0)
+
+    def start_plotting(self):
+        self.plot_thread = threading.Thread(target=self.plot_log)
+        self.plot_thread.start()
+
+    def plot_log(self):
+        PlotWidget = pg.plot(title="Plotting T vs t")
+        t = self.exptime - self.exptime[0]
+        while self.log_thread.is_alive():
+            PlotWidget.plot(t, self.temperature_log, clear=True)
+            pg.QtGui.QGuiApplication.processEvents()
+            sleep(0.3)
+        
+
+
+#   Lakeshore queries:
+
+    """ def get_temperature_log(self, channel):     
+        self.temperature_log = self.tempctrl.get_kelvin_reading(channel)
+        # query temperature value
+        # store it
+        return """
+    
+    """ def get_heater_power(self, channel):
+        # query heater power value
+        # store it
+        return """
+    
+    """ def change_temperature(self, temperature):
+        # turn off ramp if activated
+        # set temperature
+        # wait till stable --> Set stability condition?
+        return """
+    
+    """ def ramp_temperature(self, channel, temperature, ramp_speed):
+        # turn on ramp if off
+        # set ramp speed
+        # set temperature to target
+        # loop until target is reached --> stable at target?
+        return """
+    
+    """ def temperature_stable(self, channel)
+        #Check if temperature is stable
+        return """
+
+
+#   SR830 queries
+        
+""" def get_output(self)
+    self.data = self.lockin.get_X()
+    #get data from the SR830, getting X, Y, R, theta is just a "channel" number, from 1 to 4 in the driver. """
+
+""" def set_output_V(self, output):
+        return """
+    
+"""  def set_output_frequency(self, frequency):
+        return """
+    
+#   Data saving
+""" def save_data(self)
+    return """
+    
+#   Ramp Measurement
+    
+""" def ramp_measurement(self, config_file):
+    self.change_temperature(config_file['ramp']['ramp_start_temp'])
+    while temperature_stable == False:
+        self.temperature_stable(channel)
+        sleep(1)
+    self.ramp_temperature(channel, congig_file['ramp']['ramp_end_temp'], config_file['ramp']['ramp_speed'])
+    while temperature_stable == False:
+        self.save_data()
+        sleep(config['ramp']['ramp_delay']) """
+
+#   Steps Measurement
+            
+""" def step_measurement(self, config_file):
+    self.temperature_array = np.linspace(config_file['steps']['steps_start_temp'], config_file['steps']['steps_stop_temp'], config_file['steps']['steps_num_steps'])
+    ave = config_file['steps']['steps_average']
+    for i, T in enumerate(self.temperature_array):
+        self.change_temperature(T)
+        while self.T_stable == False:
+            self.temperature_stable(channel)
+            sleep(1)
+        self.average_temp = 0
+        self.average_data = 0
+        for j in range(ave):
+            self.average_temp = self.average_temp + self.temperature
+            self.average_data = self.average_data + self.data
+        self.average_temp = self.average_temp/ave
+        self.average_data = self.average_data/ave """
