@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QHBoxLayout
 from PyQt5 import uic
 from PyQt5.QtCore import QTimer
 import pyqtgraph as pg
@@ -14,10 +14,18 @@ class MainWindow(QMainWindow):
 
         self.resist = resist
 
-        self.plot_widget = pg.PlotWidget()
+        self.plot_widget = pg.PlotWidget(title="Temperature Log")
         self.plot = self.plot_widget.plot([0], [0])
-        layout = self.central_widget.layout()
+        self.plot_widget.setLabel('bottom','time', units = "s")
+        self.plot_widget.setLabel('left','Temperature', units = "K")
+        layout = self.graph_box.layout()
         layout.addWidget(self.plot_widget)
+
+        self.plot2_widget = pg.PlotWidget(title="Data Log")
+        self.plot2 = self.plot2_widget.plot([0], [0])
+        self.plot2_widget.setLabel('bottom','time', units = "s")
+        self.plot2_widget.setLabel('left','Voltage', units = "V")
+        layout.addWidget(self.plot2_widget)
 
         # self.start_line.setText(str(self.experiment.config['Scan']['start']))
         # self.stop_line.setText(str(self.experiment.config['Scan']['stop']))
@@ -29,11 +37,11 @@ class MainWindow(QMainWindow):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
-        self.timer.start(50)
+        self.timer.start(1000)
 
     def start_log_button_clicked(self):
         self.resist.start_logging()
-        print('Log started')
+        print('Log Started')
 
     def stop_log_button_clicked(self):
         self.resist.stop_logging()
@@ -45,6 +53,6 @@ class MainWindow(QMainWindow):
 
     def update_plot(self):
         self.plot.setData(self.resist.exptime, self.resist.temperature_log)
-
+        self.plot2.setData(self.resist.exptime, self.resist.data_log)
     
 

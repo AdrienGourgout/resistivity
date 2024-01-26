@@ -36,6 +36,11 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QWidget" name="graph_box" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout"/>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

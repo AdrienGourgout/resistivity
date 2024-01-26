@@ -39,10 +39,10 @@ class Resistivity:
 
             self.temp=self.tempctrl.get_kelvin_reading(1)
             self.voltage=self.lockin.get_X()
-            self.t=time()
+            self.t=time()-self.initial_time
 
-            # self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
-            self.temperature_log = np.append(self.temperature_log, random.randint(0,100), axis=None)
+            self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
+            # self.temperature_log = np.append(self.temperature_log, random.randint(0,100), axis=None)
             self.data_log = np.append(self.data_log, self.voltage, axis=None)
             self.exptime = np.append(self.exptime, self.t, axis=None)
 
@@ -51,6 +51,7 @@ class Resistivity:
 
     def start_logging(self):
         self.keep_running = True
+        self.clear_log()
         self.log_thread = threading.Thread(target=self.get_log_values)
         self.log_thread.start()
 
@@ -62,18 +63,19 @@ class Resistivity:
         self.temperature_log = np.empty(0)
         self.data_log = np.empty(0)
         self.exptime = np.empty(0)
+        self.initial_time = time()
 
-    def start_plotting(self):
-        self.plot_thread = threading.Thread(target=self.plot_log)
-        self.plot_thread.start()
+    # def start_plotting(self):
+    #     self.plot_thread = threading.Thread(target=self.plot_log)
+    #     self.plot_thread.start()
 
-    def plot_log(self):
-        PlotWidget = pg.plot(title="Plotting T vs t")
-        t = self.exptime - self.exptime[0]
-        while self.log_thread.is_alive():
-            PlotWidget.plot(t, self.temperature_log, clear=True)
-            pg.QtGui.QGuiApplication.processEvents()
-            sleep(0.3)
+    # def plot_log(self):
+    #     PlotWidget = pg.plot(title="Plotting T vs t")
+    #     t = self.exptime - self.exptime[0]
+    #     while self.log_thread.is_alive():
+    #         PlotWidget.plot(t, self.temperature_log, clear=True)
+    #         pg.QtGui.QGuiApplication.processEvents()
+    #         sleep(0.3)
         
 
 
