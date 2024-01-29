@@ -13,12 +13,16 @@ LS350:
 # Saving info:
 Saving:
   filename: data.dat
-  folder: C:\Users\gourgout\Python\Resistivity\V1\Data
+  logname: data_log.dat
+  folder: C:\Users\gourgout\Python\Resistivity\Data
 
 
 # Measurement info:
 
 Ramp:
-  start_T:
-  end_T:
-  ramp_speed:
+  ramp_start_T: 5
+  ramp_end_T: 100
+  ramp_speed: 2 # in Kelvin/min
+
+Step:
+  

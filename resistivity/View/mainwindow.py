@@ -34,6 +34,8 @@ class MainWindow(QMainWindow):
         self.start_log_button.clicked.connect(self.start_log_button_clicked)
         self.stop_log_button.clicked.connect(self.stop_log_button_clicked)
         self.clear_log_button.clicked.connect(self.clear_log_button_clicked)
+        self.start_ramp_button.clicked.connect(self.start_ramp_button_clicked)
+        self.save_data_button.clicked.connect(self.save_data_button_clicked)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
@@ -50,6 +52,15 @@ class MainWindow(QMainWindow):
     def clear_log_button_clicked(self):
         self.resist.clear_log()
         print('Log Cleared')
+
+    def start_ramp_button_clicked(self):
+        print('Ramp Started')
+        self.resist.start_ramp()
+
+    def save_data_button_clicked(self):
+        print('Starting to save data')
+        self.resist.start_saving_log()
+
 
     def update_plot(self):
         self.plot.setData(self.resist.exptime, self.resist.temperature_log)

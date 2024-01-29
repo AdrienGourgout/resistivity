@@ -4,9 +4,10 @@ from resistivity.Driver.temperature_controllers import TemperatureController
 import numpy as np
 import threading
 import pyqtgraph as pg
+import os
 import random
 import yaml
-
+from datetime import datetime
 
 
 
@@ -18,7 +19,11 @@ class Resistivity:
         self.temperature_log = np.empty(0)
         self.data_log = np.empty(0)
         self.exptime = np.empty(0)
+        self.t = None
+        self.temp = None
+        self.voltage = None
         self.keep_running = True
+        self.autosavelog = True
         # load config file with yaml
 
     def load_config(self):
@@ -35,19 +40,31 @@ class Resistivity:
         
 
     def get_log_values(self):
+        if self.autosavelog == True:
+            self.temp = self.tempctrl.get_kelvin_reading(1)
+            self.voltage = self.lockin.get_X()
+            self.t = time()-self.initial_time
+            self.save_data()
+
         while self.keep_running == True:
 
-            self.temp=self.tempctrl.get_kelvin_reading(1)
-            self.voltage=self.lockin.get_X()
-            self.t=time()-self.initial_time
+            self.temp = self.tempctrl.get_kelvin_reading(1)
+            self.voltage = self.lockin.get_X()
+            self.t = time()-self.initial_time
+
+            
 
             self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
             # self.temperature_log = np.append(self.temperature_log, random.randint(0,100), axis=None)
             self.data_log = np.append(self.data_log, self.voltage, axis=None)
             self.exptime = np.append(self.exptime, self.t, axis=None)
 
-            
-            sleep(0.3)
+            data = np.vstack([self.t, self.temp, self.voltage]).T
+            with open(self.data_file, 'a') as file:
+                np.savetxt(file, data)
+
+
+            sleep(1)
 
     def start_logging(self):
         self.keep_running = True
@@ -65,18 +82,49 @@ class Resistivity:
         self.exptime = np.empty(0)
         self.initial_time = time()
 
-    # def start_plotting(self):
-    #     self.plot_thread = threading.Thread(target=self.plot_log)
-    #     self.plot_thread.start()
+    def start_ramp(self):
+        self.tempctrl.set_control_setpoint(1, self.config['Ramp']['ramp_start_T'])
+        sleep(2)
+        self.tempctrl.set_setpoint_ramp_parameter(1, ramp_enable=True, rate_value=self.config['Ramp']['ramp_speed'])
+        sleep(2)
+        self.tempctrl.set_control_setpoint(1, self.config['Ramp']['ramp_end_T'])
 
-    # def plot_log(self):
-    #     PlotWidget = pg.plot(title="Plotting T vs t")
-    #     t = self.exptime - self.exptime[0]
-    #     while self.log_thread.is_alive():
-    #         PlotWidget.plot(t, self.temperature_log, clear=True)
-    #         pg.QtGui.QGuiApplication.processEvents()
-    #         sleep(0.3)
+        while self.tempctrl.get_setpoint_ramp_status(1) == True:
+            sleep(5)
+            print('still ramping')
+
+        print('ramp done')
+
+#   Data saving
         
+    def save_data(self):
+
+        data_folder = self.config['Saving']['folder']
+        today_folder = f'{datetime.today():%Y-%m-%d}'
+        saving_folder = os.path.join(data_folder, today_folder)
+        if not os.path.isdir(saving_folder):
+            os.makedirs(saving_folder)
+
+        data = np.vstack([self.t, self.temp, self.voltage]).T
+        header = "time in s, Temperature in V"
+
+        filename = self.config['Saving']['logname']
+        base_name = filename.split('.')[0]
+        ext = filename.split('.')[-1]
+        i = 1
+        while os.path.isfile(os.path.join(saving_folder,f'{base_name}_{i:04d}.{ext}')):
+            i += 1
+
+        self.data_file = os.path.join(saving_folder, f'{base_name}_{i:04d}.{ext}')
+        # metadata_file = os.path.join(saving_folder, f'{base_name}_{i:04d}_metadata.yml')
+        np.savetxt(self.data_file, data, header=header)
+        # with open(metadata_file, 'w') as f:
+        #     f.write(yaml.dump(self.config, default_flow_style=False))
+
+# Need a method to save the log file. Clear log should not stop or reset the saving (mostly not reset time to zero)
+# Stop log should stop the saving (same is_running?), but not reset it.
+# Needs to append to a file
+# With Numpy --> create the files first, then open them, then append using savetxt
 
 
 #   Lakeshore queries:
@@ -122,10 +170,7 @@ class Resistivity:
 """  def set_output_frequency(self, frequency):
         return """
     
-#   Data saving
-""" def save_data(self)
-    return """
-    
+
 #   Ramp Measurement
     
 """ def ramp_measurement(self, config_file):

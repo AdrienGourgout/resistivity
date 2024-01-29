@@ -12,7 +12,6 @@ Meas.start_logging()
 #     pg.QtGui.QGuiApplication.processEvents()
 #     sleep(.1)
 
-Meas.start_plotting()
 
 sleep(15)
 
