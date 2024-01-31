@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>865</width>
+    <height>837</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -51,6 +51,13 @@
      </widget>
     </item>
     <item>
+     <widget class="QPushButton" name="open_log_window_button">
+      <property name="text">
+       <string>Open Log Window</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QWidget" name="graph_box" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout"/>
      </widget>
@@ -62,7 +69,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>865</width>
      <height>21</height>
     </rect>
    </property>

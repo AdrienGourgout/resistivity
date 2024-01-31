@@ -52,8 +52,6 @@ class Resistivity:
             self.voltage = self.lockin.get_X()
             self.t = time()-self.initial_time
 
-            
-
             self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
             # self.temperature_log = np.append(self.temperature_log, random.randint(0,100), axis=None)
             self.data_log = np.append(self.data_log, self.voltage, axis=None)
@@ -62,7 +60,6 @@ class Resistivity:
             data = np.vstack([self.t, self.temp, self.voltage]).T
             with open(self.data_file, 'a') as file:
                 np.savetxt(file, data)
-
 
             sleep(1)
 
