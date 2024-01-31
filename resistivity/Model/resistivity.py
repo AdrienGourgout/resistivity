@@ -48,8 +48,10 @@ class Resistivity:
 
         while self.keep_running == True:
 
-            self.temp = self.tempctrl.get_kelvin_reading(1)
-            self.voltage = self.lockin.get_X()
+            #self.temp = self.tempctrl.get_kelvin_reading(1)
+            self.temp = random.randint(0,100)
+            #self.voltage = self.lockin.get_X()
+            self.voltage = random.randint(0,100)
             self.t = time()-self.initial_time
 
             self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
