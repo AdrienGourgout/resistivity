@@ -4,6 +4,7 @@ from PyQt5.QtCore import QTimer
 import pyqtgraph as pg
 import os
 
+
 class MainWindow(QMainWindow):
     def __init__(self, resist=None):
         super().__init__()
@@ -14,38 +15,31 @@ class MainWindow(QMainWindow):
 
         self.resist = resist
 
-        self.plot_widget = pg.PlotWidget(title="Temperature Log")
-        self.plot = self.plot_widget.plot([0], [0])
-        self.plot_widget.setLabel('bottom','time', units = "s")
-        self.plot_widget.setLabel('left','Temperature', units = "K")
-        layout = self.graph_box.layout()
-        layout.addWidget(self.plot_widget)
-
-        self.plot2_widget = pg.PlotWidget(title="Data Log")
-        self.plot2 = self.plot2_widget.plot([0], [0])
-        self.plot2_widget.setLabel('bottom','time', units = "s")
-        self.plot2_widget.setLabel('left','Voltage', units = "V")
-        layout.addWidget(self.plot2_widget)
-
         # self.start_line.setText(str(self.experiment.config['Scan']['start']))
         # self.stop_line.setText(str(self.experiment.config['Scan']['stop']))
         # self.num_steps_line.setText(str(self.experiment.config['Scan']['num_steps']))
 
         self.start_log_button.clicked.connect(self.start_log_button_clicked)
         self.stop_log_button.clicked.connect(self.stop_log_button_clicked)
-        self.clear_log_button.clicked.connect(self.clear_log_button_clicked)
         self.start_ramp_button.clicked.connect(self.start_ramp_button_clicked)
-        self.save_data_button.clicked.connect(self.save_data_button_clicked)
-        self.open_log_window_button.clicked.connect(self.open_log_window_button_clicked)
+        self.open_graph_display_button.clicked.connect(self.open_graph_display_button_clicked)
+        self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_plot)
-        self.timer.start(1000)
+
         self.window_log_list = []
 
-    def open_log_window_button_clicked(self):
-        self.window_log_list.append(Logwindow())
+
+    
+        
+
+
+    def open_graph_display_button_clicked(self):
+        self.window_log_list.append(Logwindow(self.resist))
         self.window_log_list[-1].show()
+
+    def open_devices_menu_button_clicked(self):
+        self.device_menu_window = Devices(self.resist)
+        self.device_menu_window.show()
 
 
     def start_log_button_clicked(self):
@@ -69,9 +63,7 @@ class MainWindow(QMainWindow):
         self.resist.start_saving_log()
 
 
-    def update_plot(self):
-        self.plot.setData(self.resist.exptime, self.resist.temperature_log)
-        self.plot2.setData(self.resist.exptime, self.resist.data_log)
+
 
 
 class Logwindow(QWidget):
@@ -79,7 +71,62 @@ class Logwindow(QWidget):
         super().__init__()
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_file = os.path.join(base_dir, 'GUI', 'log_window.ui')
+        ui_file = os.path.join(base_dir, 'GUI', 'graph_display_window.ui')
+        uic.loadUi(ui_file, self)
+
+        self.resist = resist
+
+        self.plot_widget = pg.PlotWidget(title="Temperature Log")
+        self.plot = self.plot_widget.plot([0], [0])
+        self.plot_widget.setLabel('bottom','time', units = "s")
+        self.plot_widget.setLabel('left','Temperature', units = "K")
+        layout = self.graph_box.layout()
+        layout.addWidget(self.plot_widget)
+
+        # self.plot2_widget = pg.PlotWidget(title="Data Log")
+        # self.plot2 = self.plot2_widget.plot([0], [0])
+        # self.plot2_widget.setLabel('bottom','time', units = "s")
+        # self.plot2_widget.setLabel('left','Voltage', units = "V")
+        # layout.addWidget(self.plot2_widget)
+
+        
+        self.x_axis_menu.addItem("Time")
+        self.x_axis_menu.addItem("Temperature")
+        self.x_axis_menu.addItem("Data")
+
+        self.y_axis_menu.addItem("Time")
+        self.y_axis_menu.addItem("Temperature")
+        self.y_axis_menu.addItem("Data")
+
+        self.x_item = 0
+        self.y_item = 0
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_plot)
+        self.timer.start(1000)
+
+        self.x_axis_menu.currentIndexChanged.connect(self.x_axis_menu_index_changed)
+        self.y_axis_menu.currentIndexChanged.connect(self.y_axis_menu_index_changed)
+
+    def x_axis_menu_index_changed(self):
+        self.x_item = self.x_axis_menu.currentIndex()
+
+    def y_axis_menu_index_changed(self):
+        self.y_item = self.y_axis_menu.currentIndex()
+
+    def update_plot(self):
+        x_axis = self.resist.data_list[self.x_item]
+        y_axis = self.resist.data_list[self.y_item]
+        self.plot.setData(x_axis, y_axis)
+
+
+
+class Devices(QWidget):
+    def __init__(self, resist=None):
+        super().__init__()
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_file = os.path.join(base_dir, 'GUI', 'device_menu.ui')
         uic.loadUi(ui_file, self)
 
         self.resist = resist
@@ -110,12 +157,12 @@ class Logwindow(QWidget):
         
         # Add a button
         button = QtWidgets.QPushButton("Button")
-        self.table_widget.setCellWidget(row_position, 0, button)
+        self.table_widget.setCellWidget(row_position, 1, button)
 
         # Add a dropdown menu
         combo_box = QtWidgets.QComboBox()
         combo_box.addItems(["Option 1", "Option 2", "Option 3"])  # Add your items
-        self.table_widget.setCellWidget(row_position, 1, combo_box)
+        self.table_widget.setCellWidget(row_position, 0, combo_box)
 
     def delete_last_row(self):
         # Delete the last row

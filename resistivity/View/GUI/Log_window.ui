@@ -96,49 +96,6 @@
     </property>
    </widget>
   </widget>
-  <widget class="QWidget" name="graph_menu" native="true">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>529</y>
-     <width>671</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <widget class="QComboBox" name="comboBox_10">
-    <property name="geometry">
-     <rect>
-      <x>300</x>
-      <y>0</y>
-      <width>69</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="clear_graph_button">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>0</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Clear Graph</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QWidget" name="widget_4" native="true">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>259</y>
-     <width>671</width>
-     <height>241</height>
-    </rect>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections/>

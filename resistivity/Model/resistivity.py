@@ -64,6 +64,8 @@ class Resistivity:
             data = np.vstack([self.t, self.temp, self.voltage]).T
             with open(self.data_file, 'a') as file:
                 np.savetxt(file, data)
+            
+            self.data_list = [self.exptime, self.temperature_log, self.data_log]
 
             sleep(1)
 

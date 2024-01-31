@@ -6,75 +6,118 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>865</width>
-    <height>837</height>
+    <width>512</width>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="central_widget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QPushButton" name="start_log_button">
-      <property name="text">
-       <string>Start Log</string>
-      </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QWidget" name="widget_2" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="text">
+          <string>Ramp parameters</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="start_ramp_button">
+         <property name="text">
+          <string>Start Ramp Measurement</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
-    <item>
-     <widget class="QPushButton" name="stop_log_button">
-      <property name="text">
-       <string>Stop Log</string>
-      </property>
+    <item row="0" column="0">
+     <widget class="QWidget" name="widget" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="open_devices_menu_button">
+         <property name="text">
+          <string>Devices</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_2">
+         <property name="text">
+          <string>Data/Log Files</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_3">
+         <property name="text">
+          <string>Thermometry (under construction)</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
-    <item>
-     <widget class="QPushButton" name="clear_log_button">
-      <property name="text">
-       <string>Clear Log</string>
-      </property>
+    <item row="1" column="1">
+     <widget class="QWidget" name="widget_4" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QPushButton" name="pushButton_6">
+         <property name="text">
+          <string>Step parameters</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_7">
+         <property name="text">
+          <string>Start Step measurement</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_8">
+         <property name="text">
+          <string>View Step Graph</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
-    <item>
-     <widget class="QPushButton" name="start_ramp_button">
-      <property name="text">
-       <string>Start Ramp</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="save_data_button">
-      <property name="text">
-       <string>Save Data</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="open_log_window_button">
-      <property name="text">
-       <string>Open Log Window</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QWidget" name="graph_box" native="true">
-      <layout class="QHBoxLayout" name="horizontalLayout"/>
+    <item row="1" column="0">
+     <widget class="QWidget" name="widget_3" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QPushButton" name="start_log_button">
+         <property name="text">
+          <string>Start Logging</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stop_log_button">
+         <property name="text">
+          <string>Stop Logging</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="open_graph_display_button">
+         <property name="text">
+          <string>View Log Graphs</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>865</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>
