@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer
 import pyqtgraph as pg
@@ -23,15 +23,15 @@ class MainWindow(QMainWindow):
         self.stop_log_button.clicked.connect(self.stop_log_button_clicked)
         self.start_ramp_button.clicked.connect(self.start_ramp_button_clicked)
         self.open_graph_display_button.clicked.connect(self.open_graph_display_button_clicked)
+        
+        self.save_log_data_checkbox.stateChanged.connect(self.save_log_data_checkbox_changed)
+
+        # Experiment Setup buttons:
         self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
+        self.datalog_files_button.clicked.connect(self.open_datalog_files_button_clicked)
 
 
         self.window_log_list = []
-
-
-    
-        
-
 
     def open_graph_display_button_clicked(self):
         self.window_log_list.append(Logwindow(self.resist))
@@ -41,6 +41,18 @@ class MainWindow(QMainWindow):
         self.device_menu_window = Devices(self.resist)
         self.device_menu_window.show()
 
+    def open_datalog_files_button_clicked(self):
+        self.window_datalog_files = DataLogFile(self.resist)
+        self.window_datalog_files.show()
+
+    def save_log_data_checkbox_changed(self):
+        print('changed!')
+        if self.save_log_data_checkbox.isChecked():
+            self.resist.log_saving_checkbox = True
+            print('saving now!')
+        else:
+            self.resist.log_saving_checkbox = False
+            print('no saving for u')
 
     def start_log_button_clicked(self):
         self.resist.start_logging()
@@ -146,25 +158,68 @@ class Devices(QWidget):
 
         # Table Widget
         self.table_widget = QtWidgets.QTableWidget()
-        self.table_widget.setColumnCount(2)  # Two columns for button and dropdown
-        self.table_widget.setHorizontalHeaderLabels(["Button", "Dropdown"])
+        self.table_widget.setColumnCount(3)  # Two columns for button and dropdown
+        self.table_widget.setHorizontalHeaderLabels(["Device", "Address"])
         layout.addWidget(self.table_widget)
+
+        self.load_instruments_button.clicked.connect(self.load_instruments_button_clicked)
+
+    def load_instruments_button_clicked(self):
+        self.resist.load_instruments()
 
     def add_new_row(self):
         # Add a row
         row_position = self.table_widget.rowCount()
         self.table_widget.insertRow(row_position)
         
-        # Add a button
-        button = QtWidgets.QPushButton("Button")
-        self.table_widget.setCellWidget(row_position, 1, button)
+        # Add the address line
+        line = QtWidgets.QLineEdit()
+        self.table_widget.setCellWidget(row_position, 1, line)
 
         # Add a dropdown menu
         combo_box = QtWidgets.QComboBox()
-        combo_box.addItems(["Option 1", "Option 2", "Option 3"])  # Add your items
+        combo_box.addItems(["Lakeshore 350", "Lock-in SR830"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
+
+        # Add a validate button
+        button = QtWidgets.QPushButton("Validate")
+        self.table_widget.setCellWidget(row_position, 2, button)
+
+        # Connect signals for interaction with cell contents
+        #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
+        #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
+        button.clicked.connect(lambda _, row=row_position: self.validate_button_clicked(row))
+
+    def validate_button_clicked(self, row):
+        instrument = self.table_widget.cellWidget(row, 0).currentText()
+        address = self.table_widget.cellWidget(row, 1).text()
+       
+        if (instrument, address) not in zip(self.resist.instr_list[0], self.resist.instr_list[1]):
+            self.resist.instr_list[0].append(instrument)
+            self.resist.instr_list[1].append(address)
+        else:
+            print('Instrument already exists')
+
+    #def combo_box_changed(self, row, index):
+    #    self.resist.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
+
+    #def line_edit_changed(self, row, text):
+    #    self.resist.instr_list[1].append(text)
+
 
     def delete_last_row(self):
         # Delete the last row
         row_position = self.table_widget.rowCount()
         self.table_widget.removeRow(row_position - 1)
+
+
+
+class DataLogFile(QWidget):
+    def __init__(self, resist=None):
+        super().__init__()
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_file = os.path.join(base_dir, 'GUI', 'data-log_files.ui')
+        uic.loadUi(ui_file, self)
+
+        self.resist = resist

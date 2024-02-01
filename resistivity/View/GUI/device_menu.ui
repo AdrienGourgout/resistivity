@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>730</width>
-    <height>539</height>
+    <width>729</width>
+    <height>541</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,10 +19,33 @@
      <x>9</x>
      <y>9</y>
      <width>711</width>
-     <height>521</height>
+     <height>501</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout"/>
+  </widget>
+  <widget class="QWidget" name="widget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>509</y>
+     <width>711</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <widget class="QPushButton" name="load_instruments_button">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>0</y>
+      <width>321</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Instruments</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

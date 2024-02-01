@@ -29,7 +29,7 @@
        <string>Log File Path</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="saving_file_line">
+     <widget class="QLineEdit" name="saving_log_file_line">
       <property name="geometry">
        <rect>
         <x>60</x>
@@ -43,7 +43,7 @@
    </item>
    <item>
     <widget class="QWidget" name="file_menu_2" native="true">
-     <widget class="QLabel" name="saving_file_label_2">
+     <widget class="QLabel" name="saving_data_file_label">
       <property name="geometry">
        <rect>
         <x>110</x>
@@ -56,7 +56,7 @@
        <string>Data File Path</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="saving_file_line_2">
+     <widget class="QLineEdit" name="saving_data_file_line">
       <property name="geometry">
        <rect>
         <x>60</x>
