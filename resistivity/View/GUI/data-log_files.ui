@@ -68,6 +68,13 @@
      </widget>
     </widget>
    </item>
+   <item>
+    <widget class="QPushButton" name="validation_button">
+     <property name="text">
+      <string>Validate</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

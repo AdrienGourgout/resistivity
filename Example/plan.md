@@ -1,46 +1,20 @@
-# 2 types of measurements:
+A implémenter:
 
-- temperature ramp
-- temperature steps
+- ranger data dans dictionnaire                                                                                                       **DONE**
 
-# Always:
+- récupérer les bonnes datas suivant l'instrument                                                                                     **DONE**
 
-Need a log --> quantities (temperature, lockin output) should be measured continuously and saved in a log file (with threading/queueing, probably queueing is better)
-And plotted in real time (for further version, have the possibility to change plot between time/temperature/something else dynamically?)
+- menu déroulant pour le nom de la variable qui dépend de l'instrument sélectionné avant?                                             **DONE**
+--> faire un dictionnaire avec pour clé les noms de variable et pour valeur la fonction pour récupérer la variable en question.       **DONE**
 
-Data from config need to be in a header.
+- menu déroulant correspondant aux datas sélectionnées                                                                                **DONE**
 
-Temps en valeur absolue / enregistrer en format exponentiel / delimiter = , (dans np.savetxt)
-extension CSV --> colorie les colonnes
+- **Différentier les valeurs pour la sauvegarde et celles pour le graph**
 
+- **graph qui plot plusieurs datas à la fois avec une couleur différente**
 
-# Config file:
+- **clear graph**
 
-  Lakeshore Channel: 1
-  Ramp: yes/no
-  Log_delay: 1s or different
-  For Ramp: ramp_start_point - ramp_end_point - ramp_speed - ramp_delay --> add possibility to have multiple arrays (sequence)
-  For Steps:  start point - end point - number of steps --> add possibility to have multiple arrays? (sequence)
-              Averaging (in s)- 
-
-
-# Steps for Ramp:
-
-  Set temperature to starting point
-  Wait for stable (set time? Condition?)
-  Start the ramp
-  Loop to save the data with a set delay --> Ends when the ramp is complete (condition?)
-
-
-# Steps for steps:
-
-  Loop over the temperature array:
-    Set temperature to starting point
-    Wait for stable
-    Loop to get the data, average it over the averaging parameter
-    Save the data
-
-
-
-Objectif: mesurer et plot en temps réel les datas et la température en fonction du temps
-          sauvegarder dans le log
+- Partie rampe
+- Sauvegarde données
+- Finir le log

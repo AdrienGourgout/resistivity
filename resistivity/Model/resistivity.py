@@ -24,8 +24,9 @@ class Resistivity:
         self.voltage = None
         self.keep_running = True
         self.log_saving_checkbox = False
-        self.instr_list = [[],[]]
+        self.instr_list = [[],[],[],[]]
         self.instruments = {}
+        self.data_dict = {}
         # load config file with yaml
 
     def load_config(self):
@@ -34,25 +35,35 @@ class Resistivity:
         self.config = data
 
     def load_instruments(self):
-        if self.instr_list == [[],[]]:
+        if self.instr_list == [[],[],[],[]]:
             print('Nothing to load')
         else:
             i = 1
             j = 1
-            for instr, address in zip(self.instr_list[0], self.instr_list[1]):
+            for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
                 if instr == 'Lakeshore 350':
-                    name = 'tempctrl_' + str(i)
+                    #name = 'tempctrl_' + str(i)
                     temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
                     i = i+1
                 if instr == 'Lock-in SR830':
-                    name = 'lockin_' + str(j)
+                    #name = 'lockin_' + str(j)
                     temp = device(address)
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
                     j = j+1
             print('All instruments loaded succesfully')
+
+            self.load_data_dict()
+    
+    def load_data_dict(self):
+        array = np.empty(0)
+        timearray = {'Time': array}
+        self.data_dict.update(timearray)
+        for i, name in enumerate(self.instr_list[3]):
+            new_entry = {name: array}
+            self.data_dict.update(new_entry)
         
     
 
@@ -61,20 +72,45 @@ class Resistivity:
 
     def get_log_values(self):
         if self.log_saving_checkbox == True:
-            self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
-            #self.temp = random.randint(0,100)
-            self.voltage = self.instruments['lockin_1'].get_X()
-            #self.voltage = random.randint(0,100)
+            #self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
+            self.temp = random.randint(0,100)
+            #self.voltage = self.instruments['lockin_1'].get_X()
+            self.voltage = random.randint(0,100)
             self.t = time()-self.initial_time
             self.save_data()
 
         while self.keep_running == True:
 
-            self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
+            self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
+
+            for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
+                if quantity == 'Temperature':
+
+                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
+
+                if quantity == 'X value':
+                    
+                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
+
+                if quantity == 'Y value':
+                    
+                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
+
+                if quantity == 'R value':
+                    
+                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
+
+                if quantity == 'Theta':
+                    
+                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
+
+
+
+            #self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
             #self.temp = random.randint(0,100)
-            self.voltage = self.instruments['lockin_1'].get_X()
+            #self.voltage = self.instruments['lockin_1'].get_X()
             #self.voltage = random.randint(0,100)
-            self.t = time()-self.initial_time
+            #self.t = time()-self.initial_time
 
             self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
             self.data_log = np.append(self.data_log, self.voltage, axis=None)
@@ -152,34 +188,7 @@ class Resistivity:
 
 #   Lakeshore queries:
 
-    """ def get_temperature_log(self, channel):     
-        self.temperature_log = self.tempctrl.get_kelvin_reading(channel)
-        # query temperature value
-        # store it
-        return """
-    
-    """ def get_heater_power(self, channel):
-        # query heater power value
-        # store it
-        return """
-    
-    """ def change_temperature(self, temperature):
-        # turn off ramp if activated
-        # set temperature
-        # wait till stable --> Set stability condition?
-        return """
-    
-    """ def ramp_temperature(self, channel, temperature, ramp_speed):
-        # turn on ramp if off
-        # set ramp speed
-        # set temperature to target
-        # loop until target is reached --> stable at target?
-        return """
-    
-    """ def temperature_stable(self, channel)
-        #Check if temperature is stable
-        return """
-
+   
 
 #   SR830 queries
         

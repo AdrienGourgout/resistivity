@@ -14,6 +14,8 @@ class MainWindow(QMainWindow):
         uic.loadUi(ui_file, self)
 
         self.resist = resist
+        self.device_menu_window = None
+        self.window_datalog_files = None
 
         # self.start_line.setText(str(self.experiment.config['Scan']['start']))
         # self.stop_line.setText(str(self.experiment.config['Scan']['stop']))
@@ -38,11 +40,13 @@ class MainWindow(QMainWindow):
         self.window_log_list[-1].show()
 
     def open_devices_menu_button_clicked(self):
-        self.device_menu_window = Devices(self.resist)
+        if self.device_menu_window == None:
+            self.device_menu_window = Devices(self.resist)
         self.device_menu_window.show()
 
     def open_datalog_files_button_clicked(self):
-        self.window_datalog_files = DataLogFile(self.resist)
+        if self.window_datalog_files == None:
+            self.window_datalog_files = DataLogFile(self.resist)
         self.window_datalog_files.show()
 
     def save_log_data_checkbox_changed(self):
@@ -102,33 +106,30 @@ class Logwindow(QWidget):
         # layout.addWidget(self.plot2_widget)
 
         
-        self.x_axis_menu.addItem("Time")
-        self.x_axis_menu.addItem("Temperature")
-        self.x_axis_menu.addItem("Data")
+        for key, value in self.resist.data_dict.items():
+            self.x_axis_menu.addItem(f'{key}')
+            self.y_axis_menu.addItem(f'{key}')
 
-        self.y_axis_menu.addItem("Time")
-        self.y_axis_menu.addItem("Temperature")
-        self.y_axis_menu.addItem("Data")
-
-        self.x_item = 0
-        self.y_item = 0
+        self.x_item = self.x_axis_menu.currentText()
+        self.y_item = self.x_axis_menu.currentText()
 
         self.timer = QTimer()
-        self.timer.timeout.connect(self.update_plot)
+        if self.resist.keep_running == True:
+            self.timer.timeout.connect(self.update_plot)
         self.timer.start(1000)
 
         self.x_axis_menu.currentIndexChanged.connect(self.x_axis_menu_index_changed)
         self.y_axis_menu.currentIndexChanged.connect(self.y_axis_menu_index_changed)
 
     def x_axis_menu_index_changed(self):
-        self.x_item = self.x_axis_menu.currentIndex()
+        self.x_item = self.x_axis_menu.currentText()
 
     def y_axis_menu_index_changed(self):
-        self.y_item = self.y_axis_menu.currentIndex()
+        self.y_item = self.y_axis_menu.currentText()
 
     def update_plot(self):
-        x_axis = self.resist.data_list[self.x_item]
-        y_axis = self.resist.data_list[self.y_item]
+        x_axis = self.resist.data_dict[self.x_item]
+        y_axis = self.resist.data_dict[self.y_item]
         self.plot.setData(x_axis, y_axis)
 
 
@@ -146,7 +147,7 @@ class Devices(QWidget):
         # Device definition:
         layout = self.device_menu.layout()
 
-        # Add button
+        # Add row button
         self.add_button = QtWidgets.QPushButton("Add Device")
         self.add_button.clicked.connect(self.add_new_row)
         layout.addWidget(self.add_button)
@@ -158,8 +159,8 @@ class Devices(QWidget):
 
         # Table Widget
         self.table_widget = QtWidgets.QTableWidget()
-        self.table_widget.setColumnCount(3)  # Two columns for button and dropdown
-        self.table_widget.setHorizontalHeaderLabels(["Device", "Address"])
+        self.table_widget.setColumnCount(5)
+        self.table_widget.setHorizontalHeaderLabels(["Device", "Address", "Variable", "Name", "Validation"])
         layout.addWidget(self.table_widget)
 
         self.load_instruments_button.clicked.connect(self.load_instruments_button_clicked)
@@ -176,29 +177,51 @@ class Devices(QWidget):
         line = QtWidgets.QLineEdit()
         self.table_widget.setCellWidget(row_position, 1, line)
 
-        # Add a dropdown menu
+        # Add the instrument selection menu
         combo_box = QtWidgets.QComboBox()
-        combo_box.addItems(["Lakeshore 350", "Lock-in SR830"])  # Add your items
+        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
         # Add a validate button
         button = QtWidgets.QPushButton("Validate")
-        self.table_widget.setCellWidget(row_position, 2, button)
+        self.table_widget.setCellWidget(row_position, 4, button)
+
+        # Add a dropdown menu to define measured quantity
+        combo_box2 = QtWidgets.QComboBox()
+        combo_box2.addItems([""])
+        self.table_widget.setCellWidget(row_position, 2, combo_box2)
+
+        # Add a line to name your quantity
+        line2 = QtWidgets.QLineEdit()
+        self.table_widget.setCellWidget(row_position, 3, line2)
 
         # Connect signals for interaction with cell contents
         #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
         #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
         button.clicked.connect(lambda _, row=row_position: self.validate_button_clicked(row))
+        combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
 
     def validate_button_clicked(self, row):
         instrument = self.table_widget.cellWidget(row, 0).currentText()
         address = self.table_widget.cellWidget(row, 1).text()
+        quantity = self.table_widget.cellWidget(row, 2).currentText()
+        name = self.table_widget.cellWidget(row, 3).text()
        
-        if (instrument, address) not in zip(self.resist.instr_list[0], self.resist.instr_list[1]):
+        if (instrument, address, quantity, name) not in zip(self.resist.instr_list[0], self.resist.instr_list[1], self.resist.instr_list[2], self.resist.instr_list[3]):
             self.resist.instr_list[0].append(instrument)
             self.resist.instr_list[1].append(address)
+            self.resist.instr_list[2].append(quantity)
+            self.resist.instr_list[3].append(name)
         else:
             print('Instrument already exists')
+
+    def combo_box_changed(self, row, index):
+        if index == 1:
+            self.table_widget.cellWidget(row, 2).clear()
+            self.table_widget.cellWidget(row, 2).addItems(["Temperature"])
+        if index == 2:
+            self.table_widget.cellWidget(row, 2).clear()
+            self.table_widget.cellWidget(row, 2).addItems(["X value", "Y value", "R value", "Theta"])
 
     #def combo_box_changed(self, row, index):
     #    self.resist.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
@@ -223,3 +246,12 @@ class DataLogFile(QWidget):
         uic.loadUi(ui_file, self)
 
         self.resist = resist
+
+        self.validation_button.clicked.connect(self.validation_button_clicked)
+
+    def validation_button_clicked(self):
+        log_path = self.saving_log_file_line.text()
+        data_path = self.saving_data_file_line.text()
+
+        self.resist.config['Saving']['log_path'] = log_path
+        self.resist.config['Saving']['data_path'] = data_path

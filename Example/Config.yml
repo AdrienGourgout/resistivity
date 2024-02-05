@@ -15,6 +15,8 @@ Saving:
   filename: data.dat
   logname: data_log.dat
   folder: C:\Users\gourgout\Python\Resistivity\Data
+  log_path: C:\Users\gourgout\Python\Resistivity\Data\data_log.dat
+  data_path: C:\Users\gourgout\Python\Resistivity\Data\data.dat
 
 
 # Measurement info:
