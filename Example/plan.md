@@ -11,7 +11,7 @@ A implémenter:
 
 - **Différentier les valeurs pour la sauvegarde et celles pour le graph**
 
-- **graph qui plot plusieurs datas à la fois avec une couleur différente**
+- graph qui plot plusieurs datas à la fois avec une couleur différente                                                                **DONE**
 
 - **clear graph**
 

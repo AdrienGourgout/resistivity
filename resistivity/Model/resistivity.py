@@ -27,6 +27,7 @@ class Resistivity:
         self.instr_list = [[],[],[],[]]
         self.instruments = {}
         self.data_dict = {}
+        self.use_random_values = False
         # load config file with yaml
 
     def load_config(self):
@@ -42,13 +43,11 @@ class Resistivity:
             j = 1
             for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
                 if instr == 'Lakeshore 350':
-                    #name = 'tempctrl_' + str(i)
                     temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
                     i = i+1
                 if instr == 'Lock-in SR830':
-                    #name = 'lockin_' + str(j)
                     temp = device(address)
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
@@ -84,25 +83,28 @@ class Resistivity:
             self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
 
             for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
-                if quantity == 'Temperature':
+                if self.use_random_values == True:
+                    self.data_dict[name] = np.append(self.data_dict[name], random.randint(0,100))
+                else:
+                    if quantity == 'Temperature':
 
-                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
+                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
 
-                if quantity == 'X value':
+                    if quantity == 'X value':
                     
-                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
+                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
 
-                if quantity == 'Y value':
+                    if quantity == 'Y value':
                     
-                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
+                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
 
-                if quantity == 'R value':
+                    if quantity == 'R value':
                     
-                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
+                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
 
-                if quantity == 'Theta':
+                    if quantity == 'Theta':
                     
-                    self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
+                       self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
 
 
 

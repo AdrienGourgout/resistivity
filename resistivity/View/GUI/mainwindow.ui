@@ -59,6 +59,13 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QCheckBox" name="use_random_values_checkbox">
+         <property name="text">
+          <string>Use Random Values</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>

@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget
+from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
 import os
 
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         # Experiment Setup buttons:
         self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
         self.datalog_files_button.clicked.connect(self.open_datalog_files_button_clicked)
-
+        self.use_random_values_checkbox.stateChanged.connect(self.use_random_values_checkbox_changed)
 
         self.window_log_list = []
 
@@ -78,6 +78,8 @@ class MainWindow(QMainWindow):
         print('Starting to save data')
         self.resist.start_saving_log()
 
+    def use_random_values_checkbox_changed(self):
+        self.resist.use_random_values = self.use_random_values_checkbox.isChecked()
 
 
 
@@ -108,29 +110,49 @@ class Logwindow(QWidget):
         
         for key, value in self.resist.data_dict.items():
             self.x_axis_menu.addItem(f'{key}')
-            self.y_axis_menu.addItem(f'{key}')
+            #self.y_axis_menu.addItem(f'{key}')
+
+        for key, value in self.resist.data_dict.items():
+            item = QListWidgetItem(f'{key}')
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Unchecked)
+            self.y_axis_menu.addItem(item)
 
         self.x_item = self.x_axis_menu.currentText()
-        self.y_item = self.x_axis_menu.currentText()
-
+        #self.y_items = [self.y_axis_menu.currentText()]
+        self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
+       
+        self.plot_colors = ['r', 'g', 'b', 'c', 'm', 'y']
+       
         self.timer = QTimer()
         if self.resist.keep_running == True:
             self.timer.timeout.connect(self.update_plot)
         self.timer.start(1000)
 
         self.x_axis_menu.currentIndexChanged.connect(self.x_axis_menu_index_changed)
-        self.y_axis_menu.currentIndexChanged.connect(self.y_axis_menu_index_changed)
+        self.y_axis_menu.itemChanged.connect(self.y_axis_menu_index_changed)
+        self.clear_graph_button.clicked.connect(self.clear_graph_button_clicked)
 
     def x_axis_menu_index_changed(self):
         self.x_item = self.x_axis_menu.currentText()
 
     def y_axis_menu_index_changed(self):
-        self.y_item = self.y_axis_menu.currentText()
+        self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
 
     def update_plot(self):
         x_axis = self.resist.data_dict[self.x_item]
-        y_axis = self.resist.data_dict[self.y_item]
-        self.plot.setData(x_axis, y_axis)
+        #y_axis = self.resist.data_dict[self.y_item]
+        #self.plot.setData(x_axis, y_axis)
+        self.plot_widget.clear()
+        for i, y_item in enumerate(self.y_items):
+            y_axis = self.resist.data_dict[y_item]
+            color = self.plot_colors[i % len(self.plot_colors)]
+            self.plot_widget.plot(x_axis, y_axis, name=y_item, pen=color)
+
+    def clear_graph_button_clicked(self):
+        self.resist.clear_log()
+
+
 
 
 
