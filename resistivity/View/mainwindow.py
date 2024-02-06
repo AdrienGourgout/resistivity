@@ -144,7 +144,7 @@ class Logwindow(QWidget):
             self.plot_widget.plot(x_axis, y_axis, name=y_item, pen=color)
 
     def clear_graph_button_clicked(self):
-        self.resist.clear_log()
+        self.resist.clear_graph()
 
 
 

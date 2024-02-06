@@ -16,20 +16,15 @@ class Resistivity:
 
     def __init__ (self, config_file):
         self.config_file = config_file
-        self.temperature_log = np.empty(0)
-        self.data_log = np.empty(0)
-        self.exptime = np.empty(0)
-        self.t = None
-        self.temp = None
-        self.voltage = None
         self.keep_running = True
         self.log_saving_checkbox = False
         self.instr_list = [[],[],[],[]]
         self.instruments = {}
         self.data_dict = {}
         self.data_log_dict = {}
-        #self.use_random_values = False
-        # load config file with yaml
+        self.initial_time_graph = time()
+        self.initial_time = time()
+
 
     def load_config(self):
         with open(self.config_file, 'r') as f:
@@ -76,7 +71,7 @@ class Resistivity:
 
         while self.keep_running == True:
             self.data_log_dict['Time'] = time() - self.initial_time
-            self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
+            self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time_graph)
 
             for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
 
@@ -128,7 +123,6 @@ class Resistivity:
 
     def start_logging(self):
         self.keep_running = True
-        self.clear_log()
         self.log_thread = threading.Thread(target=self.get_log_values)
         self.log_thread.start()
 
@@ -136,11 +130,10 @@ class Resistivity:
     def stop_logging(self):
         self.keep_running = False
 
-    def clear_log(self):
-        self.temperature_log = np.empty(0)
-        self.data_log = np.empty(0)
-        self.exptime = np.empty(0)
-        self.initial_time = time()
+    def clear_graph(self):
+        for keys in self.data_dict:
+            self.data_dict[keys] = np.empty(0)
+        self.initial_time_graph = time()
 
     def start_ramp(self):
         self.tempctrl.set_control_setpoint(1, self.config['Ramp']['ramp_start_T'])
@@ -178,18 +171,9 @@ class Resistivity:
             i += 1
 
         self.data_file = f'{base_name}_{i:04d}.{ext}'
-        # metadata_file = os.path.join(saving_folder, f'{base_name}_{i:04d}_metadata.yml')
         with open(self.data_file, 'w') as f:
             f.write(','.join(keys) + '\n')
         f.close()
-        #np.savetxt(self.data_file, data)
-        # with open(metadata_file, 'w') as f:
-        #     f.write(yaml.dump(self.config, default_flow_style=False))
-
-# Need a method to save the log file. Clear log should not stop or reset the saving (mostly not reset time to zero)
-# Stop log should stop the saving (same is_running?), but not reset it.
-# Needs to append to a file
-# With Numpy --> create the files first, then open them, then append using savetxt
 
 
 #   Lakeshore queries:
@@ -197,16 +181,6 @@ class Resistivity:
    
 
 #   SR830 queries
-        
-""" def get_output(self)
-    self.data = self.lockin.get_X()
-    #get data from the SR830, getting X, Y, R, theta is just a "channel" number, from 1 to 4 in the driver. """
-
-""" def set_output_V(self, output):
-        return """
-    
-"""  def set_output_frequency(self, frequency):
-        return """
     
 
 #   Ramp Measurement

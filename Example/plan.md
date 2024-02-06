@@ -9,12 +9,13 @@ A implémenter:
 
 - menu déroulant correspondant aux datas sélectionnées                                                                                **DONE**
 
-- **Différentier les valeurs pour la sauvegarde et celles pour le graph**
+- Différentier les valeurs pour la sauvegarde et celles pour le graph                                                                 **DONE**
 
 - graph qui plot plusieurs datas à la fois avec une couleur différente                                                                **DONE**
 
-- **clear graph**
+- clear graph                                                                                                                         **DONE**
 
 - Partie rampe
-- Sauvegarde données
-- Finir le log
+
+- Sauvegarde données                                                                                                                  **DONE**
+- Finir le log                                                                                                                        **DONE**
