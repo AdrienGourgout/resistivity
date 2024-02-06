@@ -31,7 +31,6 @@ class MainWindow(QMainWindow):
         # Experiment Setup buttons:
         self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
         self.datalog_files_button.clicked.connect(self.open_datalog_files_button_clicked)
-        self.use_random_values_checkbox.stateChanged.connect(self.use_random_values_checkbox_changed)
 
         self.window_log_list = []
 
@@ -50,13 +49,11 @@ class MainWindow(QMainWindow):
         self.window_datalog_files.show()
 
     def save_log_data_checkbox_changed(self):
-        print('changed!')
-        if self.save_log_data_checkbox.isChecked():
-            self.resist.log_saving_checkbox = True
-            print('saving now!')
+        if self.save_log_data_checkbox.isChecked() == True:
+            self.resist.save_data()
+            self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
         else:
-            self.resist.log_saving_checkbox = False
-            print('no saving for u')
+            self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
 
     def start_log_button_clicked(self):
         self.resist.start_logging()
@@ -77,9 +74,6 @@ class MainWindow(QMainWindow):
     def save_data_button_clicked(self):
         print('Starting to save data')
         self.resist.start_saving_log()
-
-    def use_random_values_checkbox_changed(self):
-        self.resist.use_random_values = self.use_random_values_checkbox.isChecked()
 
 
 
@@ -201,7 +195,7 @@ class Devices(QWidget):
 
         # Add the instrument selection menu
         combo_box = QtWidgets.QComboBox()
-        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830"])  # Add your items
+        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "RandomGen"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
         # Add a validate button
@@ -244,6 +238,9 @@ class Devices(QWidget):
         if index == 2:
             self.table_widget.cellWidget(row, 2).clear()
             self.table_widget.cellWidget(row, 2).addItems(["X value", "Y value", "R value", "Theta"])
+        if index == 3:
+            self.table_widget.cellWidget(row, 2).clear()
+            self.table_widget.cellWidget(row, 2).addItems(["Random 1", "Random 2", "Random 3", "Random 4"])
 
     #def combo_box_changed(self, row, index):
     #    self.resist.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
@@ -268,6 +265,8 @@ class DataLogFile(QWidget):
         uic.loadUi(ui_file, self)
 
         self.resist = resist
+
+        self.saving_log_file_line.setText(self.resist.config['Saving']['log_path'])
 
         self.validation_button.clicked.connect(self.validation_button_clicked)
 

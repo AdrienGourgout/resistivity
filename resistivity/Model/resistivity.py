@@ -27,7 +27,8 @@ class Resistivity:
         self.instr_list = [[],[],[],[]]
         self.instruments = {}
         self.data_dict = {}
-        self.use_random_values = False
+        self.data_log_dict = {}
+        #self.use_random_values = False
         # load config file with yaml
 
     def load_config(self):
@@ -39,19 +40,19 @@ class Resistivity:
         if self.instr_list == [[],[],[],[]]:
             print('Nothing to load')
         else:
-            i = 1
-            j = 1
             for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
                 if instr == 'Lakeshore 350':
                     temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
-                    i = i+1
                 if instr == 'Lock-in SR830':
                     temp = device(address)
                     new_instr = {name: temp}
                     self.instruments.update(new_instr)
-                    j = j+1
+                if instr == 'RandomGen':
+                    temp = random
+                    new_instr = {name: temp}
+                    self.instruments.update(new_instr)
             print('All instruments loaded succesfully')
 
             self.load_data_dict()
@@ -60,9 +61,11 @@ class Resistivity:
         array = np.empty(0)
         timearray = {'Time': array}
         self.data_dict.update(timearray)
+        self.data_log_dict.update(timearray)
         for i, name in enumerate(self.instr_list[3]):
             new_entry = {name: array}
             self.data_dict.update(new_entry)
+            self.data_log_dict.update(new_entry)
         
     
 
@@ -70,60 +73,56 @@ class Resistivity:
         
 
     def get_log_values(self):
-        if self.log_saving_checkbox == True:
-            #self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
-            self.temp = random.randint(0,100)
-            #self.voltage = self.instruments['lockin_1'].get_X()
-            self.voltage = random.randint(0,100)
-            self.t = time()-self.initial_time
-            self.save_data()
 
         while self.keep_running == True:
-
+            self.data_log_dict['Time'] = time() - self.initial_time
             self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
 
             for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
-                if self.use_random_values == True:
-                    self.data_dict[name] = np.append(self.data_dict[name], random.randint(0,100))
-                else:
-                    if quantity == 'Temperature':
 
-                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
+                if quantity == 'Temperature':
+                    self.data_log_dict[name] = self.instruments[name].get_kelvin_reading(1)
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-                    if quantity == 'X value':
-                    
-                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
+                if quantity == 'X value':
+                    self.data_log_dict[name] = self.instruments[name].get_X()
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-                    if quantity == 'Y value':
-                    
-                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
+                if quantity == 'Y value':
+                    self.data_log_dict[name] = self.instruments[name].get_Y()
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-                    if quantity == 'R value':
-                    
-                        self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
+                if quantity == 'R value':
+                    self.data_log_dict[name] = self.instruments[name].get_R()
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-                    if quantity == 'Theta':
-                    
-                       self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
+                if quantity == 'Theta':
+                    self.data_log_dict[name] = self.instruments[name].get_Theta()
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
+                if quantity == 'Random 1':
+                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
+                if quantity == 'Random 2':
+                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-            #self.temp = self.instruments['tempctrl_1'].get_kelvin_reading(1)
-            #self.temp = random.randint(0,100)
-            #self.voltage = self.instruments['lockin_1'].get_X()
-            #self.voltage = random.randint(0,100)
-            #self.t = time()-self.initial_time
+                if quantity == 'Random 3':
+                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
 
-            self.temperature_log = np.append(self.temperature_log, self.temp, axis=None)
-            self.data_log = np.append(self.data_log, self.voltage, axis=None)
-            self.exptime = np.append(self.exptime, self.t, axis=None)
+                if quantity == 'Random 4':
+                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
+                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+
 
             if self.log_saving_checkbox == True:
-                data = np.vstack([self.t, self.temp, self.voltage]).T
+                values = np.array(list(self.data_log_dict.values()))
+                flattened_values = values.flatten()
                 with open(self.data_file, 'a') as file:
-                    np.savetxt(file, data)
-            
-            self.data_list = [self.exptime, self.temperature_log, self.data_log]
+                    np.savetxt(file, [flattened_values], delimiter = ',')
+                file.close()
 
             sleep(1)
 
@@ -160,25 +159,30 @@ class Resistivity:
         
     def save_data(self):
 
-        data_folder = self.config['Saving']['folder']
-        today_folder = f'{datetime.today():%Y-%m-%d}'
-        saving_folder = os.path.join(data_folder, today_folder)
-        if not os.path.isdir(saving_folder):
-            os.makedirs(saving_folder)
+        #data_folder = self.config['Saving']['log_path']
+        #today_folder = f'{datetime.today():%Y-%m-%d}'
+        #saving_folder = os.path.join(data_folder, today_folder)
+        #if not os.path.isdir(saving_folder):
+        #    os.makedirs(saving_folder)
 
-        data = np.vstack([self.t, self.temp, self.voltage]).T
-        header = "time in s, Temperature in V"
 
-        filename = self.config['Saving']['logname']
+        keys = list(self.data_log_dict.keys())
+
+        #data = np.vstack(keys)
+
+        filename = self.config['Saving']['log_path']
         base_name = filename.split('.')[0]
         ext = filename.split('.')[-1]
         i = 1
-        while os.path.isfile(os.path.join(saving_folder,f'{base_name}_{i:04d}.{ext}')):
+        while os.path.isfile(f'{base_name}_{i:04d}.{ext}'):
             i += 1
 
-        self.data_file = os.path.join(saving_folder, f'{base_name}_{i:04d}.{ext}')
+        self.data_file = f'{base_name}_{i:04d}.{ext}'
         # metadata_file = os.path.join(saving_folder, f'{base_name}_{i:04d}_metadata.yml')
-        np.savetxt(self.data_file, data, header=header)
+        with open(self.data_file, 'w') as f:
+            f.write(','.join(keys) + '\n')
+        f.close()
+        #np.savetxt(self.data_file, data)
         # with open(metadata_file, 'w') as f:
         #     f.write(yaml.dump(self.config, default_flow_style=False))
 
