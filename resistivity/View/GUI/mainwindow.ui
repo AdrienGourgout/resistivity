@@ -19,7 +19,7 @@
      <widget class="QWidget" name="widget_2" native="true">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QPushButton" name="pushButton_4">
+        <widget class="QPushButton" name="open_ramp_parameters_menu">
          <property name="text">
           <string>Ramp parameters</string>
          </property>

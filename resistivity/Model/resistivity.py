@@ -24,6 +24,7 @@ class Resistivity:
         self.data_log_dict = {}
         self.initial_time_graph = time()
         self.initial_time = time()
+        self.ramp_parameters = [[],[],[]]
 
 
     def load_config(self):
@@ -152,16 +153,7 @@ class Resistivity:
         
     def save_data(self):
 
-        #data_folder = self.config['Saving']['log_path']
-        #today_folder = f'{datetime.today():%Y-%m-%d}'
-        #saving_folder = os.path.join(data_folder, today_folder)
-        #if not os.path.isdir(saving_folder):
-        #    os.makedirs(saving_folder)
-
-
         keys = list(self.data_log_dict.keys())
-
-        #data = np.vstack(keys)
 
         filename = self.config['Saving']['log_path']
         base_name = filename.split('.')[0]
@@ -174,13 +166,6 @@ class Resistivity:
         with open(self.data_file, 'w') as f:
             f.write(','.join(keys) + '\n')
         f.close()
-
-
-#   Lakeshore queries:
-
-   
-
-#   SR830 queries
     
 
 #   Ramp Measurement

@@ -16,6 +16,7 @@ class MainWindow(QMainWindow):
         self.resist = resist
         self.device_menu_window = None
         self.window_datalog_files = None
+        self.ramp_parameters_window = None
 
         # self.start_line.setText(str(self.experiment.config['Scan']['start']))
         # self.stop_line.setText(str(self.experiment.config['Scan']['stop']))
@@ -32,7 +33,24 @@ class MainWindow(QMainWindow):
         self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
         self.datalog_files_button.clicked.connect(self.open_datalog_files_button_clicked)
 
+        # Ramp buttons:
+        self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
+
         self.window_log_list = []
+
+    def open_ramp_parameters_menu_button_clicked(self):
+        if self.ramp_parameters_window == None:
+            self.ramp_parameters_window = RampParam(self.resist)
+        self.ramp_parameters_window.show()
+
+    def start_ramp_button_clicked(self):
+        for start, stop, speed in zip(self.resist.ramp_parameters[0], self.resist.ramp_parameters[1], self.resist.ramp_parameters[2]):
+            self.resist.config['Ramp']['ramp_start_T'] = start
+            self.resist.config['Ramp']['ramp_end_T'] = stop
+            self.resist.config['Ramp']['ramp_speed'] = speed
+
+            self.resist.start_ramp()
+            
 
     def open_graph_display_button_clicked(self):
         self.window_log_list.append(Logwindow(self.resist))
@@ -66,10 +84,6 @@ class MainWindow(QMainWindow):
     def clear_log_button_clicked(self):
         self.resist.clear_log()
         print('Log Cleared')
-
-    def start_ramp_button_clicked(self):
-        print('Ramp Started')
-        self.resist.start_ramp()
 
     def save_data_button_clicked(self):
         print('Starting to save data')
@@ -176,7 +190,7 @@ class Devices(QWidget):
         # Table Widget
         self.table_widget = QtWidgets.QTableWidget()
         self.table_widget.setColumnCount(5)
-        self.table_widget.setHorizontalHeaderLabels(["Device", "Address", "Variable", "Name", "Validation"])
+        self.table_widget.setHorizontalHeaderLabels(["Device", "Address", "Variable", "Name", "Load?"])
         layout.addWidget(self.table_widget)
 
         self.load_instruments_button.clicked.connect(self.load_instruments_button_clicked)
@@ -199,8 +213,8 @@ class Devices(QWidget):
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
         # Add a validate button
-        button = QtWidgets.QPushButton("Validate")
-        self.table_widget.setCellWidget(row_position, 4, button)
+        checkbox = QtWidgets.QCheckBox("Load")
+        self.table_widget.setCellWidget(row_position, 4, checkbox)
 
         # Add a dropdown menu to define measured quantity
         combo_box2 = QtWidgets.QComboBox()
@@ -214,33 +228,49 @@ class Devices(QWidget):
         # Connect signals for interaction with cell contents
         #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
         #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
-        button.clicked.connect(lambda _, row=row_position: self.validate_button_clicked(row))
+        checkbox.stateChanged.connect(lambda _, row=row_position: self.load_checkbox_changed(row))
         combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
 
-    def validate_button_clicked(self, row):
+    def load_checkbox_changed(self, row):
         instrument = self.table_widget.cellWidget(row, 0).currentText()
         address = self.table_widget.cellWidget(row, 1).text()
         quantity = self.table_widget.cellWidget(row, 2).currentText()
         name = self.table_widget.cellWidget(row, 3).text()
-       
-        if (instrument, address, quantity, name) not in zip(self.resist.instr_list[0], self.resist.instr_list[1], self.resist.instr_list[2], self.resist.instr_list[3]):
-            self.resist.instr_list[0].append(instrument)
-            self.resist.instr_list[1].append(address)
-            self.resist.instr_list[2].append(quantity)
-            self.resist.instr_list[3].append(name)
-        else:
-            print('Instrument already exists')
+
+        if self.table_widget.cellWidget(row,4).isChecked() == True:
+            if (instrument, address, quantity, name) not in zip(self.resist.instr_list[0], self.resist.instr_list[1], self.resist.instr_list[2], self.resist.instr_list[3]):
+                self.resist.instr_list[0].append(instrument)
+                self.resist.instr_list[1].append(address)
+                self.resist.instr_list[2].append(quantity)
+                self.resist.instr_list[3].append(name)
+            else:
+                print('Instrument already exists')
+        if self.table_widget.cellWidget(row,4).isChecked() == False:
+            # Find the index of the row in instr_list
+            index = None
+            for i, (inst, addr, quant, nm) in enumerate(zip(*self.resist.instr_list)):
+             if inst == instrument and addr == address and quant == quantity and nm == name:
+                   index = i
+                   break
+
+            # Remove the corresponding row from instr_list
+            if index is not None:
+                for i in range(len(self.resist.instr_list)):
+                    del self.resist.instr_list[i][index]
 
     def combo_box_changed(self, row, index):
         if index == 1:
             self.table_widget.cellWidget(row, 2).clear()
             self.table_widget.cellWidget(row, 2).addItems(["Temperature"])
+            self.table_widget.cellWidget(row, 1).setText(self.resist.config['LS350']['ip_address'])
         if index == 2:
             self.table_widget.cellWidget(row, 2).clear()
             self.table_widget.cellWidget(row, 2).addItems(["X value", "Y value", "R value", "Theta"])
+            self.table_widget.cellWidget(row, 1).setText(self.resist.config['SR830']['port'])
         if index == 3:
             self.table_widget.cellWidget(row, 2).clear()
             self.table_widget.cellWidget(row, 2).addItems(["Random 1", "Random 2", "Random 3", "Random 4"])
+            self.table_widget.cellWidget(row, 1).setText("1")
 
     #def combo_box_changed(self, row, index):
     #    self.resist.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
@@ -276,3 +306,64 @@ class DataLogFile(QWidget):
 
         self.resist.config['Saving']['log_path'] = log_path
         self.resist.config['Saving']['data_path'] = data_path
+
+
+
+class RampParam(QWidget):
+    def __init__(self, resist=None):
+        super().__init__()
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_file = os.path.join(base_dir, 'GUI', 'ramp_parameters.ui')
+        uic.loadUi(ui_file, self)
+
+        self.resist = resist
+
+        # Device definition:
+        layout = self.sequence_menu.layout()
+
+        # Add row button
+        self.add_seq_button = QtWidgets.QPushButton("Add Row")
+        layout.addWidget(self.add_seq_button)
+
+        # Delete row button
+        self.delete_seq_button = QtWidgets.QPushButton("Delete Row")
+        layout.addWidget(self.delete_seq_button)
+
+        # Table Widget
+        self.table_widget2 = QtWidgets.QTableWidget()
+        self.table_widget2.setColumnCount(3)
+        self.table_widget2.setHorizontalHeaderLabels(["Start T", "End T", "Ramp Speed"])
+        layout.addWidget(self.table_widget2)
+
+        self.add_seq_button.clicked.connect(self.add_new_seq_row)
+        self.delete_seq_button.clicked.connect(self.delete_last_seq_row)
+        self.validate_sequence_button.clicked.connect(self.validate_sequence)
+
+    def add_new_seq_row(self):
+        # Add a row
+        row_position = self.table_widget2.rowCount()
+        self.table_widget2.insertRow(row_position)
+        
+        # Add the Start Temperature line
+        line = QtWidgets.QLineEdit()
+        self.table_widget2.setCellWidget(row_position, 0, line)
+
+        # Add the End Temperature line
+        line2 = QtWidgets.QLineEdit()
+        self.table_widget2.setCellWidget(row_position, 1, line2)
+
+        # Add the Ramp Speed line
+        line3 = QtWidgets.QLineEdit()
+        self.table_widget2.setCellWidget(row_position, 2, line3)
+    
+    def delete_last_seq_row(self):
+        # Delete the last row
+        row_position = self.table_widget2.rowCount()
+        self.table_widget2.removeRow(row_position - 1)
+
+    def validate_sequence(self):
+        for row in range(self.table_widget2.rowCount()):
+            for column in range(self.table_widget2.columnCount()):
+                self.resist.ramp_parameters[column].append(self.table_widget2.cellWidget(row,column).text())
+        
