@@ -25,6 +25,8 @@ class Resistivity:
         self.initial_time_graph = time()
         self.initial_time = time()
         self.ramp_parameters = [[],[],[]]
+        self.data_file_dict = {}
+        self.is_ramping = False
 
 
     def load_config(self):
@@ -116,10 +118,15 @@ class Resistivity:
             if self.log_saving_checkbox == True:
                 values = np.array(list(self.data_log_dict.values()))
                 flattened_values = values.flatten()
-                with open(self.data_file, 'a') as file:
+                with open(self.data_file_dict[self.config['Saving']['log_path']], 'a') as file:
                     np.savetxt(file, [flattened_values], delimiter = ',')
                 file.close()
 
+            if self.is_ramping == True:
+                with open(self.data_file_dict[self.config['Saving']['data_path']], 'a') as file2:
+                    np.savetxt(file2, [flattened_values], delimiter = ',')
+                file2.close()
+            
             sleep(1)
 
     def start_logging(self):
@@ -137,33 +144,39 @@ class Resistivity:
         self.initial_time_graph = time()
 
     def start_ramp(self):
-        self.tempctrl.set_control_setpoint(1, self.config['Ramp']['ramp_start_T'])
-        sleep(2)
-        self.tempctrl.set_setpoint_ramp_parameter(1, ramp_enable=True, rate_value=self.config['Ramp']['ramp_speed'])
-        sleep(2)
-        self.tempctrl.set_control_setpoint(1, self.config['Ramp']['ramp_end_T'])
+        for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
+            if quantity == "Temperature":
 
-        while self.tempctrl.get_setpoint_ramp_status(1) == True:
-            sleep(5)
-            print('still ramping')
+                self.instruments[name].set_control_setpoint(1, self.config['Ramp']['ramp_start_T'])
+                sleep(2)
+                self.instruments[name].set_setpoint_ramp_parameter(1, ramp_enable=True, rate_value=self.config['Ramp']['ramp_speed'])
+                sleep(2)
+                self.instruments[name].set_control_setpoint(1, self.config['Ramp']['ramp_end_T'])
+                self.is_ramping = True
+                sleep(15)
+                while self.instruments[name].get_setpoint_ramp_status(1) == True:
+                    sleep(5)
+                    print('still ramping')
+            break
 
         print('ramp done')
+        self.is_ramping = False
 
 #   Data saving
         
-    def save_data(self):
+    def save_data(self, path=None):
 
         keys = list(self.data_log_dict.keys())
 
-        filename = self.config['Saving']['log_path']
+        filename = path
         base_name = filename.split('.')[0]
         ext = filename.split('.')[-1]
         i = 1
         while os.path.isfile(f'{base_name}_{i:04d}.{ext}'):
             i += 1
 
-        self.data_file = f'{base_name}_{i:04d}.{ext}'
-        with open(self.data_file, 'w') as f:
+        self.data_file_dict[path] = f'{base_name}_{i:04d}.{ext}'
+        with open(self.data_file_dict[path], 'w') as f:
             f.write(','.join(keys) + '\n')
         f.close()
     

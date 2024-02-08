@@ -44,13 +44,16 @@ class MainWindow(QMainWindow):
         self.ramp_parameters_window.show()
 
     def start_ramp_button_clicked(self):
+        data_path = {self.resist.config['Saving']['data_path']: None}
+        self.resist.data_file_dict.update(data_path)
+        self.resist.save_data(self.resist.config['Saving']['data_path'])
         for start, stop, speed in zip(self.resist.ramp_parameters[0], self.resist.ramp_parameters[1], self.resist.ramp_parameters[2]):
             self.resist.config['Ramp']['ramp_start_T'] = start
             self.resist.config['Ramp']['ramp_end_T'] = stop
             self.resist.config['Ramp']['ramp_speed'] = speed
 
             self.resist.start_ramp()
-            
+
 
     def open_graph_display_button_clicked(self):
         self.window_log_list.append(Logwindow(self.resist))
@@ -68,7 +71,9 @@ class MainWindow(QMainWindow):
 
     def save_log_data_checkbox_changed(self):
         if self.save_log_data_checkbox.isChecked() == True:
-            self.resist.save_data()
+            log_path = {self.resist.config['Saving']['log_path']: None}
+            self.resist.data_file_dict.update(log_path)
+            self.resist.save_data(self.resist.config['Saving']['log_path'])
             self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
         else:
             self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
@@ -297,6 +302,7 @@ class DataLogFile(QWidget):
         self.resist = resist
 
         self.saving_log_file_line.setText(self.resist.config['Saving']['log_path'])
+        self.saving_data_file_line.setText(self.resist.config['Saving']['data_path'])
 
         self.validation_button.clicked.connect(self.validation_button_clicked)
 
