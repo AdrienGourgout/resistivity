@@ -13,60 +13,24 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="clear_graph_button">
-   <property name="geometry">
-    <rect>
-     <x>320</x>
-     <y>450</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Clear Graph</string>
-   </property>
-  </widget>
   <widget class="QWidget" name="graph_box" native="true">
    <property name="geometry">
     <rect>
      <x>9</x>
      <y>9</y>
-     <width>521</width>
+     <width>491</width>
      <height>421</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout"/>
   </widget>
-  <widget class="QComboBox" name="x_axis_menu">
-   <property name="geometry">
-    <rect>
-     <x>140</x>
-     <y>470</y>
-     <width>69</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>450</y>
-     <width>47</width>
-     <height>13</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>X-axis</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>560</x>
+     <x>540</x>
      <y>10</y>
-     <width>47</width>
-     <height>13</height>
+     <width>28</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
@@ -76,12 +40,41 @@
   <widget class="QListWidget" name="y_axis_menu">
    <property name="geometry">
     <rect>
-     <x>530</x>
+     <x>505</x>
      <y>30</y>
-     <width>91</width>
+     <width>101</width>
      <height>401</height>
     </rect>
    </property>
+  </widget>
+  <widget class="QWidget" name="widget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>429</y>
+     <width>331</width>
+     <height>60</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="1" column="0">
+     <widget class="QComboBox" name="x_axis_menu"/>
+    </item>
+    <item row="1" column="2">
+     <widget class="QPushButton" name="clear_graph_button">
+      <property name="text">
+       <string>Clear Graph</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>X-axis</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

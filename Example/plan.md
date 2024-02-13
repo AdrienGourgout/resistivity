@@ -18,4 +18,4 @@ A implémenter:
 - Sauvegarde données                                                                                                                  **DONE**
 - Finir le log                                                                                                                        **DONE**
 
-- Partie rampe --> UI fonctionne, classe d'expérience à modifier pour accomoder la séquence.
+- Partie rampe --> UI fonctionne, classe d'expérience à modifier pour accomoder la séquence.                                          **DONE**
