@@ -3,17 +3,11 @@ from resistivity.Driver.SR830 import device
 from resistivity.Driver.temperature_controllers import TemperatureController
 import numpy as np
 import threading
-import pyqtgraph as pg
 import os
 import random
 import yaml
-from datetime import datetime
-
-
-
 
 class Resistivity:
-
     def __init__ (self, config_file):
         self.config_file = config_file
         self.keep_running = True
@@ -28,11 +22,9 @@ class Resistivity:
         self.data_file_dict = {}
         self.is_ramping = False
 
-
     def load_config(self):
         with open(self.config_file, 'r') as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
-        self.config = data
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
 
     def load_instruments(self):
         if self.instr_list == [[],[],[],[]]:
@@ -54,7 +46,7 @@ class Resistivity:
             print('All instruments loaded succesfully')
 
             self.load_data_dict()
-    
+
     def load_data_dict(self):
         array = np.empty(0)
         timearray = {'Time': array}
@@ -64,11 +56,11 @@ class Resistivity:
             new_entry = {name: array}
             self.data_dict.update(new_entry)
             self.data_log_dict.update(new_entry)
-        
-    
+
+
 
 #       Logs
-        
+
 
     def get_log_values(self):
 
@@ -126,7 +118,7 @@ class Resistivity:
                 with open(self.data_file_dict[self.config['Saving']['data_path']], 'a') as file2:
                     np.savetxt(file2, [flattened_values], delimiter = ',')
                 file2.close()
-            
+
             sleep(1)
 
     def start_logging(self):
@@ -163,26 +155,23 @@ class Resistivity:
         self.is_ramping = False
 
 #   Data saving
-        
+
     def save_data(self, path=None):
-
         keys = list(self.data_log_dict.keys())
-
         filename = path
         base_name = filename.split('.')[0]
         ext = filename.split('.')[-1]
         i = 1
         while os.path.isfile(f'{base_name}_{i:04d}.{ext}'):
             i += 1
-
         self.data_file_dict[path] = f'{base_name}_{i:04d}.{ext}'
         with open(self.data_file_dict[path], 'w') as f:
             f.write(','.join(keys) + '\n')
         f.close()
-    
+
 
 #   Ramp Measurement
-    
+
 """ def ramp_measurement(self, config_file):
     self.change_temperature(config_file['ramp']['ramp_start_temp'])
     while temperature_stable == False:
@@ -194,7 +183,7 @@ class Resistivity:
         sleep(config['ramp']['ramp_delay']) """
 
 #   Steps Measurement
-            
+
 """ def step_measurement(self, config_file):
     self.temperature_array = np.linspace(config_file['steps']['steps_start_temp'], config_file['steps']['steps_stop_temp'], config_file['steps']['steps_num_steps'])
     ave = config_file['steps']['steps_average']
@@ -210,3 +199,7 @@ class Resistivity:
             self.average_data = self.average_data + self.data
         self.average_temp = self.average_temp/ave
         self.average_data = self.average_data/ave """
+
+if __name__ == "__main__":
+    resist = Resistivity('Config.yml')
+    resist.load_config()
