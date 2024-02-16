@@ -114,36 +114,6 @@ class Resistivity:
         del self.instruments_query[name]
         del self.data_dict[name]
         del self.quantity_dict[name]
-    
-
-    # def load_instruments(self):
-    #     if self.instr_list == [[],[],[],[]]:
-    #         print('Nothing to load')
-    #     else:
-    #         for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
-    #             if instr == 'Lakeshore 350':
-    #                 temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
-    #                 new_instr = {name: temp}
-    #                 self.instruments.update(new_instr)
-    #             if instr == 'Lock-in SR830':
-    #                 temp = device(address)
-    #                 new_instr = {name: temp}
-    #                 self.instruments.update(new_instr)
-    #             if instr == 'RandomGen':
-    #                 temp = random
-    #                 new_instr = {name: temp}
-    #                 self.instruments.update(new_instr)
-    #         print('All instruments loaded succesfully')
-
-    #         self.load_data_dict()
-
-    # def load_data_dict(self):
-    #     array = np.empty(0)
-    #     timearray = {'Time': array}
-    #     self.data_dict.update(timearray)
-    #     for i, name in enumerate(self.instr_list[3]):
-    #         new_entry = {name: array}
-    #         self.data_dict.update(new_entry)
 
 
 
@@ -158,52 +128,36 @@ class Resistivity:
             for name in self.instruments_query.keys():
                 self.data_dict[name] = np.append(self.data_dict[name], self.instruments_query[name](*self.argument_dict[name]))
 
-            # for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
-
-            #     if quantity == 'Temperature':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
-
-            #     if quantity == 'X value':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
-
-            #     if quantity == 'Y value':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
-
-            #     if quantity == 'R value':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
-
-            #     if quantity == 'Theta':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
-
-            #     if quantity == 'Random 1':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
-
-            #     if quantity == 'Random 2':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
-
-            #     if quantity == 'Random 3':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
-
-            #     if quantity == 'Random 4':
-            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
-
-            values = np.empty(0)
-            for key, values_list in self.data_dict.items():
-                if values_list.any():
-                    np.append(values, values_list[-1])
-            flattened_values = values.flatten()
-
             if self.log_saving_checkbox == True:
-                with open(self.data_file_dict[self.config['Saving']['log_path']], 'a') as file:
-                    np.savetxt(file, [flattened_values], delimiter = ',')
-                file.close()
+                self.save_log()
 
             if self.is_ramping == True:
-                with open(self.data_file_dict[self.config['Saving']['data_path']], 'a') as file2:
-                    np.savetxt(file2, [flattened_values], delimiter = ',')
-                file2.close()
+                self.save_ramp()
 
             sleep(1)
+
+    def save_log(self):
+        values = np.empty(0)
+        for key, values_list in self.data_dict.items():
+            if values_list.any():
+                np.append(values, values_list[-1])
+        flattened_values = values.flatten()
+        with open(self.data_file_dict[self.config['Saving']['log_path']], 'a') as file:
+                np.savetxt(file, [flattened_values], delimiter = ',')
+        file.close()
+        
+    def save_ramp(self):
+        values = np.empty(0)
+        for key, values_list in self.data_dict.items():
+            if values_list.any():
+                np.append(values, values_list[-1])
+        flattened_values = values.flatten()
+        with open(self.data_file_dict[self.config['Saving']['data_path']], 'a') as file2:
+            np.savetxt(file2, [flattened_values], delimiter = ',')
+        file2.close()     
+
+
+
 
     def start_logging(self):
         self.keep_running = True
