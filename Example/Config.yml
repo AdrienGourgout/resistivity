@@ -1,27 +1,37 @@
 User: Adrien
+Measurements:
+  # XX:
+  #   instrument: SR830
+  #   quantity: X
+  #   port: ASRL4::INSTR
+  # YY:
+  #   instrument: SR830
+  #   quantity: Y
+  #   address: ASRL4::INSTR
+  # T0:
+  #   instrument: LS350
+  #     quantity: Temperature
+  #     timeout: 1000
+  #     address: '192.168.0.12'
+  #     tcp_port: 7777
+  RR:
+    instrument: Random
+    quantity: Random_1
+    address: None
 
-# SR830 Lock-in Amplifier info:
-SR830:
-  port: ASRL4::INSTR
-
-# Lakeshore 350 Temperature Controller info:
-LS350:
-  timeout: 1000
-  ip_address: '192.168.0.12'
-  tcp_port: 7777
 
 # Saving info:
 Saving:
-  log_path: data_log.dat
-  data_path: data.dat
+  path:
+  file: file.dat
+
 
 
 # Measurement info:
 
-Ramp:
-  ramp_start_T: 5
-  ramp_end_T: 100
-  ramp_speed: 2 # in Kelvin/min
+# Ramp:
+#   ramp_start_T: 5
+#   ramp_end_T: 100
+#   ramp_speed: 2 # in Kelvin/min
 
-Step:
-  
+# Step:
