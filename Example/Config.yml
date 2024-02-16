@@ -12,8 +12,8 @@ LS350:
 
 # Saving info:
 Saving:
-  log_path: C:\Users\gourgout\Python\Resistivity\Data\data_log.dat
-  data_path: C:\Users\gourgout\Python\Resistivity\Data\data.dat
+  log_path: data_log.dat
+  data_path: data.dat
 
 
 # Measurement info:

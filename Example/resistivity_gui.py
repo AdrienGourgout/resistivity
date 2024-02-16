@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication
 from resistivity.View.mainwindow import MainWindow
-from resistivity.Model.resistivity import Resistivity
+from resistivity.Model.log import Resistivity
 
 resist = Resistivity('Example\Config.yml')
 resist.load_config()

@@ -12,10 +12,8 @@ class Resistivity:
         self.config_file = config_file
         self.keep_running = True
         self.log_saving_checkbox = False
-        self.instr_list = [[],[],[],[]]
         self.quantity_dict = {}
         self.argument_dict = {}
-        self.instruments = {}
         self.instruments_query = {}
         self.data_dict = {}
         self.initial_time_graph = time()
@@ -32,11 +30,6 @@ class Resistivity:
     def load_config(self):
         with open(self.config_file, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
-
-    def fill_instrument_list(self, instrument=None, address=None, quantity=None, name=None):
-        value_list = [instrument, address, quantity, name]
-        for lst, value in zip(self.instr_list, value_list):
-            lst.append(value)
 
     def lakeshore_methods(self, instr=None, quantity=None):
         if quantity == 'Temperature':
@@ -194,22 +187,23 @@ class Resistivity:
 
 #   Data saving
 
-    def save_data(self, path=None):
+    def save_data(self, filename=None):
         keys = list(self.data_dict.keys())
-        filename = path
-        base_name = filename.split('.')[0]
-        ext = filename.split('.')[-1]
+        path_folder = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        path_folder = os.path.join(path_folder, 'Data')
+        file_path = os.path.join(path_folder, filename)
+        base_name = file_path.split('.')[0]
+        ext = file_path.split('.')[-1]
         i = 1
         while os.path.isfile(f'{base_name}_{i:04d}.{ext}'):
             i += 1
-        self.data_file_dict[path] = f'{base_name}_{i:04d}.{ext}'
-        with open(self.data_file_dict[path], 'w') as f:
+        self.data_file_dict[filename] = f'{base_name}_{i:04d}.{ext}'
+        with open(self.data_file_dict[filename], 'w') as f:
             f.write(','.join(keys) + '\n')
         f.close()
 
 # Lakeshore Queries:
-    def get_lakeshore_temperature(self, instr):
-        instr.get_kelvin_reading(1)
+
 
 #   Ramp Measurement
 

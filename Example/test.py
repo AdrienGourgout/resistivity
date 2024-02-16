@@ -1,4 +1,4 @@
-from resistivity.Model.resistivity import Resistivity
+from resistivity.Model.log import Resistivity
 from time import sleep
 import pyqtgraph as pg
 
