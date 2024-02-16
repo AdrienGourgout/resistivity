@@ -18,11 +18,9 @@ class LogMeasure:
         self.initial_time    = None
         self.time_steps      = 0.5 # secondes
         ## Dictionnary for the data
-        # self.data_labels = []
         self.data_dict = {}
         self.data_dict['Time'] = np.empty(0)
-        # self.ramp_parameters = []
-        # self.is_ramping = False
+
 
     def load_config(self):
         with open(self.config_file, 'r') as f:
@@ -108,17 +106,24 @@ class LogMeasure:
             sleep(self.time_steps)
 
     def save_log(self):
-        values = np.empty(0)
-        for key, values_list in self.data_dict.items():
-            if values_list.any():
-                np.append(values, values_list[-1])
-        flattened_values = values.flatten()
         ## File
         path = self.config_dict['Saving']['path']
         file = self.config_dict['Saving']['file']
-        with open(os.path.join(path, file), 'a') as file:
-                np.savetxt(file, [flattened_values], delimiter = ',')
-        file.close()
+        if path is None:
+            path = ""
+        filepath = os.path.join(path, file)
+        # Header
+        if os.path.isfile(filepath) is False:
+            with open(filepath, 'a') as file:
+                header = [key for key in self.data_dict.keys()]
+                line = "#" + ','.join(map(str, header)) + '\n'
+                file.write(line)
+        # Values extraction
+        values = [self.data_dict[key][-1] for key in self.data_dict.keys()]
+        # Save values line by line
+        with open(filepath, 'a') as file:
+            line = ','.join(map(str, values)) + '\n'
+            file.write(line)
 
     def start_logging(self):
         self.keep_running = True
@@ -146,6 +151,9 @@ if __name__ == "__main__":
 
 
 #   Ramp Measurement
+
+    # self.ramp_parameters = []
+    # self.is_ramping = False
 
     # def start_ramp(self):
     #     for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
