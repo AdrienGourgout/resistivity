@@ -217,9 +217,9 @@ class Devices(QWidget):
         combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "RandomGen"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
-        # Add a validate button
-        checkbox = QtWidgets.QCheckBox("Load")
-        self.table_widget.setCellWidget(row_position, 4, checkbox)
+        # Add a load/unload button
+        load_unload_button = QtWidgets.QPushButton("Load")
+        self.table_widget.setCellWidget(row_position, 4, load_unload_button)
 
         # Add a dropdown menu to define measured quantity
         combo_box2 = QtWidgets.QComboBox()
@@ -233,21 +233,36 @@ class Devices(QWidget):
         # Connect signals for interaction with cell contents
         #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
         #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
-        checkbox.stateChanged.connect(lambda _, row=row_position: self.load_checkbox_changed(row))
+        #checkbox.stateChanged.connect(lambda _, row=row_position: self.load_checkbox_changed(row))
+        load_unload_button.clicked.connect(lambda _, row=row_position: self.load_unload_button_clicked(row))
         combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
 
-    def load_checkbox_changed(self, row):
+    def load_unload_button_clicked(self, row):
         instrument = self.table_widget.cellWidget(row, 0).currentText()
         address = self.table_widget.cellWidget(row, 1).text()
         quantity = self.table_widget.cellWidget(row, 2).currentText()
         name = self.table_widget.cellWidget(row, 3).text()
 
+        if self.table_widget.cellWidget(row, 4).text() == 'Load':
+            self.resist.add_instrument(instrument, address, quantity, name)
+            self.table_widget.cellWidget(row, 4).setText('Unload')
+
+            #Make the lines unchangeable
+            self.table_widget.cellWidget(row, 0).setEnabled(False)
+            self.table_widget.cellWidget(row, 1).setReadOnly(True)
+            self.table_widget.cellWidget(row, 2).setEnabled(False)
+            self.table_widget.cellWidget(row, 3).setReadOnly(True)
+            return
+
+        if self.table_widget.cellWidget(row, 4).text() == 'Unload':
+            self.resist.delete_instrument(instrument, address, quantity, name)
+            self.delete_row(row)
+            return
+
+
         if self.table_widget.cellWidget(row,4).isChecked() == True:
             if (instrument, address, quantity, name) not in zip(self.resist.instr_list[0], self.resist.instr_list[1], self.resist.instr_list[2], self.resist.instr_list[3]):
-                self.resist.instr_list[0].append(instrument)
-                self.resist.instr_list[1].append(address)
-                self.resist.instr_list[2].append(quantity)
-                self.resist.instr_list[3].append(name)
+                self.resist.fill_instrument_list(instrument, address, quantity, name)
             else:
                 print('Instrument already exists')
         if self.table_widget.cellWidget(row,4).isChecked() == False:
@@ -288,6 +303,10 @@ class Devices(QWidget):
         # Delete the last row
         row_position = self.table_widget.rowCount()
         self.table_widget.removeRow(row_position - 1)
+
+    def delete_row(self, row):
+        # Delete the row on pressing Unload button
+        self.table_widget.removeRow(row)
 
 
 

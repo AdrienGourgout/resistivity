@@ -13,49 +13,137 @@ class Resistivity:
         self.keep_running = True
         self.log_saving_checkbox = False
         self.instr_list = [[],[],[],[]]
+        self.quantity_dict = {}
+        self.argument_dict = {}
         self.instruments = {}
+        self.instruments_query = {}
         self.data_dict = {}
-        self.data_log_dict = {}
         self.initial_time_graph = time()
         self.initial_time = time()
         self.ramp_parameters = [[],[],[]]
         self.data_file_dict = {}
         self.is_ramping = False
 
+        #Add the Time array to the data dictionnary
+        array = np.empty(0)
+        timearray = {'Time': array}
+        self.data_dict.update(timearray)
+
     def load_config(self):
         with open(self.config_file, 'r') as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
 
-    def load_instruments(self):
-        if self.instr_list == [[],[],[],[]]:
-            print('Nothing to load')
-        else:
-            for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
-                if instr == 'Lakeshore 350':
-                    temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
-                    new_instr = {name: temp}
-                    self.instruments.update(new_instr)
-                if instr == 'Lock-in SR830':
-                    temp = device(address)
-                    new_instr = {name: temp}
-                    self.instruments.update(new_instr)
-                if instr == 'RandomGen':
-                    temp = random
-                    new_instr = {name: temp}
-                    self.instruments.update(new_instr)
-            print('All instruments loaded succesfully')
+    def fill_instrument_list(self, instrument=None, address=None, quantity=None, name=None):
+        value_list = [instrument, address, quantity, name]
+        for lst, value in zip(self.instr_list, value_list):
+            lst.append(value)
 
-            self.load_data_dict()
+    def lakeshore_methods(self, instr=None, quantity=None):
+        if quantity == 'Temperature':
+            return instr.get_kelvin_reading
+    
+    def SR830_methods(self, instr=None, quantity=None):
+        if quantity == 'X value':
+            return instr.get_X
+        if quantity == 'Y value':
+            return instr.get_Y
+        if quantity == 'R_value':
+            return instr.get_R
+        if quantity == 'theta':
+            return instr.get_Theta
+    
+    def Random_methods(self, instr=None, quantity=None):
+        if quantity == 'Random 1':
+            return instr.randint
+        if quantity == 'Random 2':
+            return instr.randint
+        if quantity == 'Random 3':
+            return instr.randint
+        if quantity == 'Random 4':
+            return instr.randint
 
-    def load_data_dict(self):
+    def add_instrument(self, instrument=None, address=None, quantity=None, name=None):
+
+        #Add entry to the instrument dictionnary
+
+        if instrument == 'Lakeshore 350':
+            temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
+            instr = self.lakeshore_methods(temp, quantity)
+            argument = 1
+            new_instr = {name: instr}
+            new_argument = {name: argument}
+            self.instruments_query.update(new_instr)
+            self.argument_dict.update(new_argument)
+        if instrument == 'Lock-in SR830':
+            temp = device(address)
+            instr = self.SR830_methods(temp, quantity)
+            argument = None
+            new_instr = {name: instr}
+            new_argument = {name: argument}
+            self.instruments_query.update(new_instr)
+            self.argument_dict.update(new_argument)
+        if instrument == 'RandomGen':
+            temp = random
+            instr = self.Random_methods(temp, quantity)
+            argument = (1,100)
+            new_instr = {name: instr}
+            new_argument = {name: argument}
+            self.instruments_query.update(new_instr)
+            self.argument_dict.update(new_argument)
+        
+        #Add entry to the data dictionnary
+        
         array = np.empty(0)
-        timearray = {'Time': array}
-        self.data_dict.update(timearray)
-        self.data_log_dict.update(timearray)
-        for i, name in enumerate(self.instr_list[3]):
-            new_entry = {name: array}
-            self.data_dict.update(new_entry)
-            self.data_log_dict.update(new_entry)
+        new_entry = {name: array}
+        self.data_dict.update(new_entry)
+
+        #clear all values from the data dictionnary
+
+        self.clear_graph()
+
+        #Add entry to the Quantity dictionnary
+        
+        new_quantity = {name: quantity}
+        self.quantity_dict.update(new_quantity)
+
+
+    def delete_instrument(self, instrument=None, address=None, quantity=None, name=None):
+
+        #Delete entries from instruments and data dictionnaries
+
+        del self.instruments_query[name]
+        del self.data_dict[name]
+        del self.quantity_dict[name]
+    
+
+    # def load_instruments(self):
+    #     if self.instr_list == [[],[],[],[]]:
+    #         print('Nothing to load')
+    #     else:
+    #         for instr, address, name in zip(self.instr_list[0], self.instr_list[1], self.instr_list[3]):
+    #             if instr == 'Lakeshore 350':
+    #                 temp = TemperatureController(serial_number=None, com_port=None, baud_rate=None, timeout=self.config['LS350']['timeout'], ip_address=address, tcp_port=self.config['LS350']['tcp_port'])
+    #                 new_instr = {name: temp}
+    #                 self.instruments.update(new_instr)
+    #             if instr == 'Lock-in SR830':
+    #                 temp = device(address)
+    #                 new_instr = {name: temp}
+    #                 self.instruments.update(new_instr)
+    #             if instr == 'RandomGen':
+    #                 temp = random
+    #                 new_instr = {name: temp}
+    #                 self.instruments.update(new_instr)
+    #         print('All instruments loaded succesfully')
+
+    #         self.load_data_dict()
+
+    # def load_data_dict(self):
+    #     array = np.empty(0)
+    #     timearray = {'Time': array}
+    #     self.data_dict.update(timearray)
+    #     for i, name in enumerate(self.instr_list[3]):
+    #         new_entry = {name: array}
+    #         self.data_dict.update(new_entry)
 
 
 
@@ -65,51 +153,47 @@ class Resistivity:
     def get_log_values(self):
 
         while self.keep_running == True:
-            self.data_log_dict['Time'] = time() - self.initial_time
             self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time_graph)
 
-            for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
+            for name in self.instruments_query.keys():
+                self.data_dict[name] = np.append(self.data_dict[name], self.instruments_query[name](*self.argument_dict[name]))
 
-                if quantity == 'Temperature':
-                    self.data_log_dict[name] = self.instruments[name].get_kelvin_reading(1)
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            # for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
 
-                if quantity == 'X value':
-                    self.data_log_dict[name] = self.instruments[name].get_X()
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Temperature':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_kelvin_reading(1))
 
-                if quantity == 'Y value':
-                    self.data_log_dict[name] = self.instruments[name].get_Y()
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'X value':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_X())
 
-                if quantity == 'R value':
-                    self.data_log_dict[name] = self.instruments[name].get_R()
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Y value':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Y())
 
-                if quantity == 'Theta':
-                    self.data_log_dict[name] = self.instruments[name].get_Theta()
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'R value':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_R())
 
-                if quantity == 'Random 1':
-                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Theta':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].get_Theta())
 
-                if quantity == 'Random 2':
-                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Random 1':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
 
-                if quantity == 'Random 3':
-                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Random 2':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
 
-                if quantity == 'Random 4':
-                    self.data_log_dict[name] = self.instruments[name].randint(0,100)
-                    self.data_dict[name] = np.append(self.data_dict[name], self.data_log_dict[name])
+            #     if quantity == 'Random 3':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
 
+            #     if quantity == 'Random 4':
+            #         self.data_dict[name] = np.append(self.data_dict[name], self.instruments[name].randint(0,100))
+
+            values = np.empty(0)
+            for key, values_list in self.data_dict.items():
+                if values_list.any():
+                    np.append(values, values_list[-1])
+            flattened_values = values.flatten()
 
             if self.log_saving_checkbox == True:
-                values = np.array(list(self.data_log_dict.values()))
-                flattened_values = values.flatten()
                 with open(self.data_file_dict[self.config['Saving']['log_path']], 'a') as file:
                     np.savetxt(file, [flattened_values], delimiter = ',')
                 file.close()
@@ -157,7 +241,7 @@ class Resistivity:
 #   Data saving
 
     def save_data(self, path=None):
-        keys = list(self.data_log_dict.keys())
+        keys = list(self.data_dict.keys())
         filename = path
         base_name = filename.split('.')[0]
         ext = filename.split('.')[-1]
@@ -169,6 +253,9 @@ class Resistivity:
             f.write(','.join(keys) + '\n')
         f.close()
 
+# Lakeshore Queries:
+    def get_lakeshore_temperature(self, instr):
+        instr.get_kelvin_reading(1)
 
 #   Ramp Measurement
 
