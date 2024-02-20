@@ -10,14 +10,19 @@ Measurements:
   #   address: ASRL4::INSTR
   # T0:
   #   instrument: LS350
-  #     quantity: Temperature
-  #     timeout: 1000
-  #     address: '192.168.0.12'
-  #     tcp_port: 7777
-  RR:
+  #   quantity: Temperature
+  #   timeout: 1000
+  #   address: '192.168.0.12'
+  #   tcp_port: 7777
+  RR1:
     instrument: Random
     quantity: Random_1
     address: None
+  RR2:
+    instrument: Random
+    quantity: Random_2
+    address: None
+  
 
 
 # Saving info:

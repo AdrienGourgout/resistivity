@@ -6,14 +6,14 @@ import threading
 import os
 import random
 import yaml
+from functools import partial
 
 class LogMeasure:
     def __init__ (self, config_file):
         self.config_file     = config_file
         self.config_dict     = {}
-        self.keep_running    = True
+        self.keep_running    = False
         self.saving          = False
-        self.argument_dict   = {}
         self.instruments_query = {}
         self.initial_time    = None
         self.time_steps      = 0.5 # secondes
@@ -25,6 +25,8 @@ class LogMeasure:
     def load_config(self):
         with open(self.config_file, 'r') as f:
             self.config_dict = yaml.load(f, Loader=yaml.FullLoader)
+
+    def load_instruments(self):
         for label in self.config_dict["Measurements"].keys():
             inst  = self.config_dict["Measurements"][label]["instrument"]
             adr   = self.config_dict["Measurements"][label]["address"]
@@ -32,9 +34,15 @@ class LogMeasure:
             self.add_instrument(inst, adr, quant, label)
 
     def ls350_methods(self, instr=None, quantity=None):
-        if quantity == 'Temperature':
-            return instr.get_kelvin_reading
-
+        if quantity == 'Temperature_A':
+            return partial(instr.get_kelvin_reading, input_channel=1)
+        if quantity == 'Temperature_B':
+            return partial(instr.get_kelvin_reading, input_channel=2)
+        if quantity == 'Temperature_C':
+            return partial(instr.get_kelvin_reading, input_channel=3)
+        if quantity == 'Temperature_D':
+            return partial(instr.get_kelvin_reading, input_channel=4)
+            
     def sr830_methods(self, instr=None, quantity=None):
         if quantity == 'X':
             return instr.get_X
@@ -47,11 +55,11 @@ class LogMeasure:
 
     def random_methods(self, instr=None, quantity=None):
         if quantity == 'Random_1':
-            return instr.randint
+            return partial(instr.randint, 1, 100)
         if quantity == 'Random_2':
-            return instr.randint
+            return partial(instr.randint, 1, 100)
         if quantity == 'Random_3':
-            return instr.randint
+            return partial(instr.randint, 1, 100)
 
 
     def add_instrument(self, instrument=None, address=None, quantity=None, data_label=None):
@@ -62,29 +70,23 @@ class LogMeasure:
         if instrument == 'LS350':
             temp = TemperatureController(ip_address=address, tcp_port=7777,timeout=1000)
             instr = self.ls350_methods(temp, quantity)
-            argument = 1
-            new_instr = {data_label: instr}
-            new_argument = {data_label: argument}
-            self.instruments_query.update(new_instr)
-            self.argument_dict.update(new_argument)
+            self.instruments_query[data_label] = instr
         if instrument == 'SR830':
             temp = SR830.device(address)
             instr = self.sr830_methods(temp, quantity)
-            argument = None
-            new_instr = {data_label: instr}
-            new_argument = {data_label: argument}
-            self.instruments_query.update(new_instr)
-            self.argument_dict.update(new_argument)
+            self.instruments_query[data_label] = instr
         if instrument == 'Random':
             temp = random
             instr = self.random_methods(temp, quantity)
-            argument = (1,100)
-            new_instr = {data_label: instr}
-            new_argument = {data_label: argument}
-            self.instruments_query.update(new_instr)
-            self.argument_dict.update(new_argument)
+            self.instruments_query[data_label] = instr
         # Add entry to the data dictionnary
         self.data_dict[data_label] = np.empty(0)
+        #Add entry to the config dictionnary
+        if self.config_dict["Measurements"].get(data_label) == None:
+            self.config_dict["Measurements"][data_label] = {}
+            self.config_dict["Measurements"][data_label]["instrument"] = instrument
+            self.config_dict["Measurements"][data_label]["address"] = address
+            self.config_dict["Measurements"][data_label]["quantity"] = quantity
         # Clear all values from the data dictionnary
         self.clear_data()
 
@@ -99,7 +101,7 @@ class LogMeasure:
         while self.keep_running == True:
             self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
             for data_label in self.instruments_query.keys():
-                value = self.instruments_query[data_label](*self.argument_dict[data_label])
+                value = self.instruments_query[data_label]()
                 self.data_dict[data_label] = np.append(self.data_dict[data_label], value)
             if self.saving == True:
                 self.save_log()
@@ -143,6 +145,7 @@ class LogMeasure:
 if __name__ == "__main__":
     resist = LogMeasure('../../Example/Config.yml')
     resist.load_config()
+    resist.load_instruments()
     resist.saving = True
     resist.start_logging()
     sleep(2)

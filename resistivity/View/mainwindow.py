@@ -3,6 +3,7 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
 import os
+from time import time
 
 
 class MainWindow(QMainWindow):
@@ -18,9 +19,6 @@ class MainWindow(QMainWindow):
         self.window_datalog_files = None
         self.ramp_parameters_window = None
 
-        # self.start_line.setText(str(self.experiment.config['Scan']['start']))
-        # self.stop_line.setText(str(self.experiment.config['Scan']['stop']))
-        # self.num_steps_line.setText(str(self.experiment.config['Scan']['num_steps']))
 
         self.start_log_button.clicked.connect(self.start_log_button_clicked)
         self.stop_log_button.clicked.connect(self.stop_log_button_clicked)
@@ -56,6 +54,8 @@ class MainWindow(QMainWindow):
 
 
     def open_graph_display_button_clicked(self):
+        if self.resist.keep_running == False:
+            self.start_log_button_clicked()
         self.window_log_list.append(Logwindow(self.resist))
         self.window_log_list[-1].show()
 
@@ -70,13 +70,14 @@ class MainWindow(QMainWindow):
         self.window_datalog_files.show()
 
     def save_log_data_checkbox_changed(self):
-        if self.save_log_data_checkbox.isChecked() == True:
-            log_path = {self.resist.config['Saving']['log_path']: None}
-            self.resist.data_file_dict.update(log_path)
-            self.resist.save_data(self.resist.config['Saving']['log_path'])
-            self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
-        else:
-            self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
+        self.resist.saving = self.save_log_data_checkbox.isChecked()
+        # if self.save_log_data_checkbox.isChecked() == True:
+        #     log_path = {self.resist.config['Saving']['log_path']: None}
+        #     self.resist.data_file_dict.update(log_path)
+        #     self.resist.save_data(self.resist.config['Saving']['log_path'])
+        #     self.resist.saving = self.save_log_data_checkbox.isChecked()
+        # else:
+        #     self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
 
     def start_log_button_clicked(self):
         self.resist.start_logging()
@@ -106,6 +107,10 @@ class Logwindow(QWidget):
         uic.loadUi(ui_file, self)
 
         self.resist = resist
+        self.x_axis = []
+        self.y_axis = {}
+        self.graph_data = {}
+        self.graph_initial_time = self.resist.initial_time
 
         self.plot_widget = pg.PlotWidget(title="Temperature Log")
         self.plot = self.plot_widget.plot([0], [0])
@@ -122,13 +127,12 @@ class Logwindow(QWidget):
 
         
         for key, value in self.resist.data_dict.items():
+            self.graph_data[key] = []
             self.x_axis_menu.addItem(f'{key}')
-            #self.y_axis_menu.addItem(f'{key}')
-
-        for key, value in self.resist.data_dict.items():
             item = QListWidgetItem(f'{key}')
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Unchecked)
+            self.y_axis[key] = []
             self.y_axis_menu.addItem(item)
 
         self.x_item = self.x_axis_menu.currentText()
@@ -153,17 +157,21 @@ class Logwindow(QWidget):
         self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
 
     def update_plot(self):
-        x_axis = self.resist.data_dict[self.x_item]
-        #y_axis = self.resist.data_dict[self.y_item]
-        #self.plot.setData(x_axis, y_axis)
+        for keys in self.graph_data.keys():
+            if keys == 'Time':
+                self.graph_data[keys].append(self.resist.data_dict[keys][-1] + self.resist.initial_time - self.graph_initial_time)
+            else:
+                self.graph_data[keys].append(self.resist.data_dict[keys][-1])
+
         self.plot_widget.clear()
         for i, y_item in enumerate(self.y_items):
-            y_axis = self.resist.data_dict[y_item]
             color = self.plot_colors[i % len(self.plot_colors)]
-            self.plot_widget.plot(x_axis, y_axis, name=y_item, pen=color)
+            self.plot_widget.plot(self.graph_data[self.x_item], self.graph_data[y_item], name=y_item, pen=color)
 
     def clear_graph_button_clicked(self):
-        self.resist.clear_graph()
+        for keys in self.graph_data.keys():
+            self.graph_data[keys] = []
+        self.graph_initial_time = time()
 
 
 
@@ -199,6 +207,22 @@ class Devices(QWidget):
         layout.addWidget(self.table_widget)
 
         self.load_instruments_button.clicked.connect(self.load_instruments_button_clicked)
+        self.load_config_button.clicked.connect(self.load_config_button_clicked)
+
+        #load config instruments upon opening the window
+        for label in self.resist.config_dict['Measurements'].keys():
+            # Creates the new row
+            self.add_new_row()
+            # Fill it with the data
+            row = self.table_widget.rowCount() - 1
+            self.table_widget.cellWidget(row, 0).setCurrentText(self.resist.config_dict['Measurements'][label]['instrument'])
+            self.table_widget.cellWidget(row, 1).setText(self.resist.config_dict['Measurements'][label]['address'])
+            self.table_widget.cellWidget(row, 2).setCurrentText(self.resist.config_dict['Measurements'][label]['quantity'])
+            self.table_widget.cellWidget(row, 3).setText(label)
+
+            self.load_unload_button_clicked(row)
+
+
 
     def load_instruments_button_clicked(self):
         self.resist.load_instruments()
@@ -214,7 +238,7 @@ class Devices(QWidget):
 
         # Add the instrument selection menu
         combo_box = QtWidgets.QComboBox()
-        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "RandomGen"])  # Add your items
+        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "Random"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
         # Add a load/unload button
@@ -255,41 +279,22 @@ class Devices(QWidget):
             return
 
         if self.table_widget.cellWidget(row, 4).text() == 'Unload':
-            self.resist.delete_instrument(instrument, address, quantity, name)
+            self.resist.delete_instrument(name)
             self.delete_row(row)
             return
-
-
-        if self.table_widget.cellWidget(row,4).isChecked() == True:
-            if (instrument, address, quantity, name) not in zip(self.resist.instr_list[0], self.resist.instr_list[1], self.resist.instr_list[2], self.resist.instr_list[3]):
-                self.resist.fill_instrument_list(instrument, address, quantity, name)
-            else:
-                print('Instrument already exists')
-        if self.table_widget.cellWidget(row,4).isChecked() == False:
-            # Find the index of the row in instr_list
-            index = None
-            for i, (inst, addr, quant, nm) in enumerate(zip(*self.resist.instr_list)):
-             if inst == instrument and addr == address and quant == quantity and nm == name:
-                   index = i
-                   break
-
-            # Remove the corresponding row from instr_list
-            if index is not None:
-                for i in range(len(self.resist.instr_list)):
-                    del self.resist.instr_list[i][index]
 
     def combo_box_changed(self, row, index):
         if index == 1:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["Temperature"])
-            self.table_widget.cellWidget(row, 1).setText(self.resist.config['LS350']['ip_address'])
+            self.table_widget.cellWidget(row, 2).addItems(["Temperature_A","Temperature_B","Temperature_C","Temperature_D"])
+            self.table_widget.cellWidget(row, 1).setText(self.resist.config_dict['LS350']['ip_address'])
         if index == 2:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["X value", "Y value", "R value", "Theta"])
-            self.table_widget.cellWidget(row, 1).setText(self.resist.config['SR830']['port'])
+            self.table_widget.cellWidget(row, 2).addItems(["X", "Y", "R", "Theta"])
+            self.table_widget.cellWidget(row, 1).setText(self.resist.config_dict['SR830']['port'])
         if index == 3:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["Random 1", "Random 2", "Random 3", "Random 4"])
+            self.table_widget.cellWidget(row, 2).addItems(["Random_1", "Random_2", "Random_3", "Random_4"])
             self.table_widget.cellWidget(row, 1).setText("1")
 
     #def combo_box_changed(self, row, index):
@@ -308,6 +313,11 @@ class Devices(QWidget):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
 
+    def load_config_button_clicked(self):
+        for keys, values in self.resist.config_dict['Measurements'].items():
+            self.add_new_row()
+        
+
 
 
 class DataLogFile(QWidget):
@@ -320,17 +330,17 @@ class DataLogFile(QWidget):
 
         self.resist = resist
 
-        self.saving_log_file_line.setText(self.resist.config['Saving']['log_path'])
-        self.saving_data_file_line.setText(self.resist.config['Saving']['data_path'])
+        self.saving_log_file_line.setText(self.resist.config_dict['Saving']['file'])
+        # self.saving_data_file_line.setText(self.resist.config['Saving']['data_path'])
 
         self.validation_button.clicked.connect(self.validation_button_clicked)
 
     def validation_button_clicked(self):
         log_path = self.saving_log_file_line.text()
-        data_path = self.saving_data_file_line.text()
+        # data_path = self.saving_data_file_line.text()
 
-        self.resist.config['Saving']['log_path'] = log_path
-        self.resist.config['Saving']['data_path'] = data_path
+        self.resist.config_dict['Saving']['file'] = log_path
+        # self.resist.config['Saving']['data_path'] = data_path
 
 
 

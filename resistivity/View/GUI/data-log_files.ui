@@ -26,7 +26,7 @@
          </size>
         </property>
         <property name="text">
-         <string>Log File Path</string>
+         <string>Log File Name</string>
         </property>
        </widget>
       </item>
@@ -45,7 +45,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="saving_data_file_label">
         <property name="text">
-         <string>Data File Path</string>
+         <string>Data File Name</string>
         </property>
        </widget>
       </item>
