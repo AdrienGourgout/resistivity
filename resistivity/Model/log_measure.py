@@ -16,7 +16,7 @@ class LogMeasure:
         self.saving          = False
         self.instruments_query = {}
         self.initial_time    = None
-        self.time_steps      = 0.5 # secondes
+        self.time_steps      = 0.5 # seconds
         ## Dictionnary for the data
         self.data_dict = {}
         self.data_dict['Time'] = np.empty(0)
@@ -42,7 +42,7 @@ class LogMeasure:
             return partial(instr.get_kelvin_reading, input_channel=3)
         if quantity == 'Temperature_D':
             return partial(instr.get_kelvin_reading, input_channel=4)
-            
+
     def sr830_methods(self, instr=None, quantity=None):
         if quantity == 'X':
             return instr.get_X

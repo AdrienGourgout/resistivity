@@ -14,96 +14,76 @@ class MainWindow(QMainWindow):
         ui_file = os.path.join(base_dir, 'GUI', 'mainwindow.ui')
         uic.loadUi(ui_file, self)
 
+        ## Windows
         self.resist = resist
         self.device_menu_window = None
-        self.window_datalog_files = None
-        self.ramp_parameters_window = None
+        self.window_file = None
+        self.window_graph_list = []
 
+        ## Buttons
+        self.start_button.clicked.connect(self.resist.start_logging)
+        self.stop_button.clicked.connect(self.resist.stop_logging)
+        self.save_data_checkbox.stateChanged.connect(self.resist.save_log)
+        self.open_graph_button.clicked.connect(self.open_graph_window)
+        self.open_devices_button.clicked.connect(self.open_devices_window)
+        self.open_file_button.clicked.connect(self.open_file_window)
 
-        self.start_log_button.clicked.connect(self.start_log_button_clicked)
-        self.stop_log_button.clicked.connect(self.stop_log_button_clicked)
-        self.start_ramp_button.clicked.connect(self.start_ramp_button_clicked)
-        self.open_graph_display_button.clicked.connect(self.open_graph_display_button_clicked)
-        
-        self.save_log_data_checkbox.stateChanged.connect(self.save_log_data_checkbox_changed)
-
-        # Experiment Setup buttons:
-        self.open_devices_menu_button.clicked.connect(self.open_devices_menu_button_clicked)
-        self.datalog_files_button.clicked.connect(self.open_datalog_files_button_clicked)
-
-        # Ramp buttons:
-        self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
-
-        self.window_log_list = []
-
-    def open_ramp_parameters_menu_button_clicked(self):
-        if self.ramp_parameters_window == None:
-            self.ramp_parameters_window = RampParam(self.resist)
-        self.ramp_parameters_window.show()
-
-    def start_ramp_button_clicked(self):
-        data_path = {self.resist.config['Saving']['data_path']: None}
-        self.resist.data_file_dict.update(data_path)
-        self.resist.save_data(self.resist.config['Saving']['data_path'])
-        for start, stop, speed in zip(self.resist.ramp_parameters[0], self.resist.ramp_parameters[1], self.resist.ramp_parameters[2]):
-            self.resist.config['Ramp']['ramp_start_T'] = start
-            self.resist.config['Ramp']['ramp_end_T'] = stop
-            self.resist.config['Ramp']['ramp_speed'] = speed
-
-            self.resist.start_ramp()
-
-
-    def open_graph_display_button_clicked(self):
+    def open_graph_window(self):
         if self.resist.keep_running == False:
-            self.start_log_button_clicked()
-        self.window_log_list.append(Logwindow(self.resist))
-        self.window_log_list[-1].show()
+            self.resist.start_logging()
+        self.window_graph_list.append(GraphWindow(self.resist))
+        self.window_graph_list[-1].show()
 
-    def open_devices_menu_button_clicked(self):
+    def open_devices_window(self):
         if self.device_menu_window == None:
-            self.device_menu_window = Devices(self.resist)
+            self.device_menu_window = DevicesWindow(self.resist)
         self.device_menu_window.show()
 
-    def open_datalog_files_button_clicked(self):
-        if self.window_datalog_files == None:
-            self.window_datalog_files = DataLogFile(self.resist)
-        self.window_datalog_files.show()
+    def open_file_window(self):
+        if self.window_file == None:
+            self.window_file = FileWindow(self.resist)
+        self.window_file.show()
 
-    def save_log_data_checkbox_changed(self):
-        self.resist.saving = self.save_log_data_checkbox.isChecked()
-        # if self.save_log_data_checkbox.isChecked() == True:
+    # def save_data(self):
+    #     self.resist.saving = self.save_data_checkbox.isChecked()
+        # if self.save_data_checkbox.isChecked() == True:
         #     log_path = {self.resist.config['Saving']['log_path']: None}
         #     self.resist.data_file_dict.update(log_path)
         #     self.resist.save_data(self.resist.config['Saving']['log_path'])
-        #     self.resist.saving = self.save_log_data_checkbox.isChecked()
+        #     self.resist.saving = self.save_data_checkbox.isChecked()
         # else:
-        #     self.resist.log_saving_checkbox = self.save_log_data_checkbox.isChecked()
+        #     self.resist.log_saving_checkbox = self.save_data_checkbox.isChecked()
 
-    def start_log_button_clicked(self):
-        self.resist.start_logging()
-        print('Log Started')
+    ## Ramp buttons:
+    # self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
 
-    def stop_log_button_clicked(self):
-        self.resist.stop_logging()
-        print('Log Stopped')
+    # def open_ramp_parameters_menu_button_clicked(self):
+    #     if self.ramp_parameters_window == None:
+    #         self.ramp_parameters_window = RampParam(self.resist)
+    #     self.ramp_parameters_window.show()
 
-    def clear_log_button_clicked(self):
-        self.resist.clear_log()
-        print('Log Cleared')
+    # def start_ramp_button_clicked(self):
+    #     data_path = {self.resist.config['Saving']['data_path']: None}
+    #     self.resist.data_file_dict.update(data_path)
+    #     self.resist.save_data(self.resist.config['Saving']['data_path'])
+    #     for start, stop, speed in zip(self.resist.ramp_parameters[0], self.resist.ramp_parameters[1], self.resist.ramp_parameters[2]):
+    #         self.resist.config['Ramp']['ramp_start_T'] = start
+    #         self.resist.config['Ramp']['ramp_end_T'] = stop
+    #         self.resist.config['Ramp']['ramp_speed'] = speed
 
-    def save_data_button_clicked(self):
-        print('Starting to save data')
-        self.resist.start_saving_log()
+    #         self.resist.start_ramp()
 
 
 
 
-class Logwindow(QWidget):
+
+
+class GraphWindow(QWidget):
     def __init__(self, resist=None):
         super().__init__()
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_file = os.path.join(base_dir, 'GUI', 'graph_display_window.ui')
+        ui_file = os.path.join(base_dir, 'GUI', 'graphwindow.ui')
         uic.loadUi(ui_file, self)
 
         self.resist = resist
@@ -125,7 +105,7 @@ class Logwindow(QWidget):
         # self.plot2_widget.setLabel('left','Voltage', units = "V")
         # layout.addWidget(self.plot2_widget)
 
-        
+
         for key, value in self.resist.data_dict.items():
             self.graph_data[key] = []
             self.x_axis_menu.addItem(f'{key}')
@@ -138,9 +118,9 @@ class Logwindow(QWidget):
         self.x_item = self.x_axis_menu.currentText()
         #self.y_items = [self.y_axis_menu.currentText()]
         self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
-       
+
         self.plot_colors = ['r', 'g', 'b', 'c', 'm', 'y']
-       
+
         self.timer = QTimer()
         if self.resist.keep_running == True:
             self.timer.timeout.connect(self.update_plot)
@@ -177,12 +157,12 @@ class Logwindow(QWidget):
 
 
 
-class Devices(QWidget):
+class DevicesWindow(QWidget):
     def __init__(self, resist=None):
         super().__init__()
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_file = os.path.join(base_dir, 'GUI', 'device_menu.ui')
+        ui_file = os.path.join(base_dir, 'GUI', 'deviceswindow.ui')
         uic.loadUi(ui_file, self)
 
         self.resist = resist
@@ -206,7 +186,6 @@ class Devices(QWidget):
         self.table_widget.setHorizontalHeaderLabels(["Device", "Address", "Variable", "Name", "Load?"])
         layout.addWidget(self.table_widget)
 
-        self.load_instruments_button.clicked.connect(self.load_instruments_button_clicked)
         self.load_config_button.clicked.connect(self.load_config_button_clicked)
 
         #load config instruments upon opening the window
@@ -223,15 +202,11 @@ class Devices(QWidget):
             self.load_unload_button_clicked(row)
 
 
-
-    def load_instruments_button_clicked(self):
-        self.resist.load_instruments()
-
     def add_new_row(self):
         # Add a row
         row_position = self.table_widget.rowCount()
         self.table_widget.insertRow(row_position)
-        
+
         # Add the address line
         line = QtWidgets.QLineEdit()
         self.table_widget.setCellWidget(row_position, 1, line)
@@ -316,27 +291,27 @@ class Devices(QWidget):
     def load_config_button_clicked(self):
         for keys, values in self.resist.config_dict['Measurements'].items():
             self.add_new_row()
-        
 
 
 
-class DataLogFile(QWidget):
+
+class FileWindow(QWidget):
     def __init__(self, resist=None):
         super().__init__()
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_file = os.path.join(base_dir, 'GUI', 'data-log_files.ui')
+        ui_file = os.path.join(base_dir, 'GUI', 'filewindow.ui')
         uic.loadUi(ui_file, self)
 
         self.resist = resist
 
-        self.saving_log_file_line.setText(self.resist.config_dict['Saving']['file'])
+        self.saving_file_line.setText(self.resist.config_dict['Saving']['file'])
         # self.saving_data_file_line.setText(self.resist.config['Saving']['data_path'])
 
         self.validation_button.clicked.connect(self.validation_button_clicked)
 
     def validation_button_clicked(self):
-        log_path = self.saving_log_file_line.text()
+        log_path = self.saving_file_line.text()
         # data_path = self.saving_data_file_line.text()
 
         self.resist.config_dict['Saving']['file'] = log_path
@@ -344,61 +319,60 @@ class DataLogFile(QWidget):
 
 
 
-class RampParam(QWidget):
-    def __init__(self, resist=None):
-        super().__init__()
+# class RampParam(QWidget):
+#     def __init__(self, resist=None):
+#         super().__init__()
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        ui_file = os.path.join(base_dir, 'GUI', 'ramp_parameters.ui')
-        uic.loadUi(ui_file, self)
+#         base_dir = os.path.dirname(os.path.abspath(__file__))
+#         ui_file = os.path.join(base_dir, 'GUI', 'ramp_parameters.ui')
+#         uic.loadUi(ui_file, self)
 
-        self.resist = resist
+#         self.resist = resist
 
-        # Device definition:
-        layout = self.sequence_menu.layout()
+#         # Device definition:
+#         layout = self.sequence_menu.layout()
 
-        # Add row button
-        self.add_seq_button = QtWidgets.QPushButton("Add Row")
-        layout.addWidget(self.add_seq_button)
+#         # Add row button
+#         self.add_seq_button = QtWidgets.QPushButton("Add Row")
+#         layout.addWidget(self.add_seq_button)
 
-        # Delete row button
-        self.delete_seq_button = QtWidgets.QPushButton("Delete Row")
-        layout.addWidget(self.delete_seq_button)
+#         # Delete row button
+#         self.delete_seq_button = QtWidgets.QPushButton("Delete Row")
+#         layout.addWidget(self.delete_seq_button)
 
-        # Table Widget
-        self.table_widget2 = QtWidgets.QTableWidget()
-        self.table_widget2.setColumnCount(3)
-        self.table_widget2.setHorizontalHeaderLabels(["Start T", "End T", "Ramp Speed"])
-        layout.addWidget(self.table_widget2)
+#         # Table Widget
+#         self.table_widget2 = QtWidgets.QTableWidget()
+#         self.table_widget2.setColumnCount(3)
+#         self.table_widget2.setHorizontalHeaderLabels(["Start T", "End T", "Ramp Speed"])
+#         layout.addWidget(self.table_widget2)
 
-        self.add_seq_button.clicked.connect(self.add_new_seq_row)
-        self.delete_seq_button.clicked.connect(self.delete_last_seq_row)
-        self.validate_sequence_button.clicked.connect(self.validate_sequence)
+#         self.add_seq_button.clicked.connect(self.add_new_seq_row)
+#         self.delete_seq_button.clicked.connect(self.delete_last_seq_row)
+#         self.validate_sequence_button.clicked.connect(self.validate_sequence)
 
-    def add_new_seq_row(self):
-        # Add a row
-        row_position = self.table_widget2.rowCount()
-        self.table_widget2.insertRow(row_position)
-        
-        # Add the Start Temperature line
-        line = QtWidgets.QLineEdit()
-        self.table_widget2.setCellWidget(row_position, 0, line)
+#     def add_new_seq_row(self):
+#         # Add a row
+#         row_position = self.table_widget2.rowCount()
+#         self.table_widget2.insertRow(row_position)
 
-        # Add the End Temperature line
-        line2 = QtWidgets.QLineEdit()
-        self.table_widget2.setCellWidget(row_position, 1, line2)
+#         # Add the Start Temperature line
+#         line = QtWidgets.QLineEdit()
+#         self.table_widget2.setCellWidget(row_position, 0, line)
 
-        # Add the Ramp Speed line
-        line3 = QtWidgets.QLineEdit()
-        self.table_widget2.setCellWidget(row_position, 2, line3)
-    
-    def delete_last_seq_row(self):
-        # Delete the last row
-        row_position = self.table_widget2.rowCount()
-        self.table_widget2.removeRow(row_position - 1)
+#         # Add the End Temperature line
+#         line2 = QtWidgets.QLineEdit()
+#         self.table_widget2.setCellWidget(row_position, 1, line2)
 
-    def validate_sequence(self):
-        for row in range(self.table_widget2.rowCount()):
-            for column in range(self.table_widget2.columnCount()):
-                self.resist.ramp_parameters[column].append(self.table_widget2.cellWidget(row,column).text())
-        
+#         # Add the Ramp Speed line
+#         line3 = QtWidgets.QLineEdit()
+#         self.table_widget2.setCellWidget(row_position, 2, line3)
+
+#     def delete_last_seq_row(self):
+#         # Delete the last row
+#         row_position = self.table_widget2.rowCount()
+#         self.table_widget2.removeRow(row_position - 1)
+
+#     def validate_sequence(self):
+#         for row in range(self.table_widget2.rowCount()):
+#             for column in range(self.table_widget2.columnCount()):
+#                 self.resist.ramp_parameters[column].append(self.table_widget2.cellWidget(row,column).text())
