@@ -103,12 +103,19 @@ class GraphWindow(QWidget):
         self.graph_data = {}
         self.graph_initial_time = 0
 
+        pg.setConfigOptions(antialias=True)  # as to be set before creating the widget
         self.plot_widget = pg.PlotWidget(title="")
         self.plot = self.plot_widget.plot([0], [0])
         self.plot_widget.setLabel('bottom','Time') #, units = "s")
         self.plot_widget.setLabel('left','')
         layout = self.graph_box.layout()
         layout.addWidget(self.plot_widget)
+        self.plot_widget.setBackground('#25292d')  # Black background
+        # # Frame with four corners
+        # self.plot_widget.showAxis('top', True)
+        # self.plot_widget.showAxis('right', True)
+        # self.plot_widget.getAxis('top').setStyle(showValues=False)
+        # self.plot_widget.getAxis('right').setStyle(showValues=False)
 
         for key, value in self.log.data_dict.items():
             self.graph_data[key] = np.empty(0)
