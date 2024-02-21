@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>630</width>
+    <width>629</width>
     <height>498</height>
    </rect>
   </property>
@@ -29,7 +29,7 @@
     <rect>
      <x>540</x>
      <y>10</y>
-     <width>28</width>
+     <width>41</width>
      <height>16</height>
     </rect>
    </property>
@@ -42,7 +42,7 @@
     <rect>
      <x>505</x>
      <y>30</y>
-     <width>101</width>
+     <width>121</width>
      <height>401</height>
     </rect>
    </property>
@@ -50,27 +50,27 @@
   <widget class="QWidget" name="widget" native="true">
    <property name="geometry">
     <rect>
-     <x>130</x>
-     <y>429</y>
-     <width>331</width>
-     <height>60</height>
+     <x>10</x>
+     <y>440</y>
+     <width>591</width>
+     <height>44</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="1" column="0">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
      <widget class="QComboBox" name="x_axis_menu"/>
     </item>
-    <item row="1" column="2">
-     <widget class="QPushButton" name="clear_graph_button">
-      <property name="text">
-       <string>Clear Graph</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
+    <item>
      <widget class="QLabel" name="label">
       <property name="text">
        <string>X-axis</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="clear_graph_button">
+      <property name="text">
+       <string>Clear Graph</string>
       </property>
      </widget>
     </item>

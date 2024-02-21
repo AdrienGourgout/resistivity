@@ -15,7 +15,6 @@ class LogMeasure:
         self.keep_running    = False
         self.saving          = False
         self.instruments_query = {}
-        self.initial_time    = None
         self.time_steps      = 0.5 # seconds
         ## Dictionnary for the data
         self.data_dict = {}
@@ -65,7 +64,7 @@ class LogMeasure:
     def add_instrument(self, instrument=None, address=None, quantity=None, data_label=None):
         """instrument is a string that defines the type of instrument: LS350
         address is a string for the adress
-        quantity is a string that tells if it is: X, Y, channelA, etc.
+        quantity is a string that tells if it is: X, Y, Temperature_A, etc.
         data_label is the label of the measured stuff: XX, T0, etc."""
         if instrument == 'LS350':
             temp = TemperatureController(ip_address=address, tcp_port=7777,timeout=1000)
@@ -79,15 +78,15 @@ class LogMeasure:
             temp = random
             instr = self.random_methods(temp, quantity)
             self.instruments_query[data_label] = instr
-        # Add entry to the data dictionnary
+        ## Add entry to the data dictionnary
         self.data_dict[data_label] = np.empty(0)
-        #Add entry to the config dictionnary
+        ## Add entry to the config dictionnary
         if self.config_dict["Measurements"].get(data_label) == None:
             self.config_dict["Measurements"][data_label] = {}
             self.config_dict["Measurements"][data_label]["instrument"] = instrument
             self.config_dict["Measurements"][data_label]["address"] = address
             self.config_dict["Measurements"][data_label]["quantity"] = quantity
-        # Clear all values from the data dictionnary
+        ## Clear all values from the data dictionnary
         self.clear_data()
 
 
@@ -98,38 +97,45 @@ class LogMeasure:
         del self.data_dict[data_label]
 
     def get_values(self):
-        while self.keep_running == True:
-            self.data_dict['Time'] = np.append(self.data_dict['Time'], time() - self.initial_time)
-            for data_label in self.instruments_query.keys():
-                value = self.instruments_query[data_label]()
+        while self.keep_running:
+            # Time
+            current_time = self.data_dict['Time'][-1] + self.time_steps if self.data_dict['Time'].size else 0 # be zero for the first point
+            self.data_dict['Time'] = np.append(self.data_dict['Time'], current_time)
+            # Data
+            for data_label, data_function in self.instruments_query.items():
+                value = data_function()
                 self.data_dict[data_label] = np.append(self.data_dict[data_label], value)
-            if self.saving == True:
+            # Save log if saving is enabled
+            if self.saving:
                 self.save_log()
+            ## Sets how long each steps takes
             sleep(self.time_steps)
 
+
     def save_log(self):
-        ## File
-        path = self.config_dict['Saving']['path']
-        file = self.config_dict['Saving']['file']
-        if path is None:
-            path = ""
-        filepath = os.path.join(path, file)
-        # Header
-        if os.path.isfile(filepath) is False:
+        if self.keep_running:
+            ## File
+            path = self.config_dict['Saving']['path']
+            file = self.config_dict['Saving']['file']
+            if path is None:
+                path = ""
+            filepath = os.path.join(path, file)
+            print(os.path.isfile(filepath))
+            # Header
+            if os.path.isfile(filepath) is False:
+                with open(filepath, 'a') as file:
+                    header = [key for key in self.data_dict.keys()]
+                    line = "#" + ','.join(map(str, header)) + '\n'
+                    file.write(line)
+            # Values extraction
+            values = [self.data_dict[key][-1] for key in self.data_dict.keys()]
+            # Save values line by line
             with open(filepath, 'a') as file:
-                header = [key for key in self.data_dict.keys()]
-                line = "#" + ','.join(map(str, header)) + '\n'
+                line = ','.join(map(str, values)) + '\n'
                 file.write(line)
-        # Values extraction
-        values = [self.data_dict[key][-1] for key in self.data_dict.keys()]
-        # Save values line by line
-        with open(filepath, 'a') as file:
-            line = ','.join(map(str, values)) + '\n'
-            file.write(line)
 
     def start_logging(self):
         self.keep_running = True
-        self.initial_time = time()
         self.log_thread = threading.Thread(target=self.get_values)
         self.log_thread.start()
 
@@ -143,14 +149,16 @@ class LogMeasure:
 
 
 if __name__ == "__main__":
-    resist = LogMeasure('../../Example/Config.yml')
-    resist.load_config()
-    resist.load_instruments()
-    resist.saving = True
-    resist.start_logging()
+    log = LogMeasure('../../Example/Config.yml')
+    log.load_config()
+    log.load_instruments()
+    log.saving = True
+    log.start_logging()
     sleep(2)
-    resist.stop_logging()
-    print(resist.data_dict["Time"], resist.data_dict["RR"])
+    log.saving = False
+    sleep(1)
+    log.stop_logging()
+    print(log.data_dict["Time"], log.data_dict["RR1"])
 
 
 #   Ramp Measurement
