@@ -163,8 +163,9 @@ class GraphWindow(QWidget):
 
         self.plot_widget.clear()
         for i, y_item in enumerate(self.y_items):
-            color = self.plot_colors[i % len(self.plot_colors)]
-            self.plot_widget.plot(self.graph_data[self.x_item], self.graph_data[y_item], name=y_item, pen=color)
+            # color = self.plot_colors[i % len(self.plot_colors)]
+            pen = pg.mkPen(color=self.plot_colors[i], width=2, style=Qt.PenStyle.SolidLine)
+            self.plot_widget.plot(self.graph_data[self.x_item], self.graph_data[y_item], name=y_item, pen=pen)
 
     def clear_graph_button_clicked(self):
         for keys in self.graph_data.keys():
