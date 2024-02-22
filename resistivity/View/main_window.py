@@ -65,6 +65,10 @@ class MainWindow(QMainWindow):
             self.start_button.setEnabled(True)
             self.stop_button.setEnabled(False)
 
+    def closeEvent(self, event):
+        """Override the closeEvent (when the user press on the close button)"""
+        self.log.stop_logging()
+
     ## Ramp buttons:
     # self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
 
@@ -103,15 +107,48 @@ class GraphWindow(QWidget):
         self.graph_data = {}
         self.graph_initial_time = 0
 
-        pg.setConfigOptions(antialias=True)  # as to be set before creating the widget
-        self.plot_widget = pg.PlotWidget(title="")
-        self.plot = self.plot_widget.plot([0], [0])
-        self.plot_widget.setLabel('bottom','Time') #, units = "s")
-        self.plot_widget.setLabel('left','')
+        # Create the main window
+        self.plot_widget = pg.GraphicsLayoutWidget(show=True, title='Continuous Data Plot')
+        self.plot_widget.resize(800, 600)
+        self.plot_widget.setBackground('k')  # Black background
+
+        # Create and store a reference to a plot item
+        self.plot = self.plot_widget.addPlot()
+        self.plot_items = {}  # Dictionary to hold plot items for each data series
+
+        pg.setConfigOptions(antialias=True)  # Enable anti-aliasing for smoother lines
+
+        # Customize plot appearance
+        self.plot.showAxis('top', True)
+        self.plot.showAxis('right', True)
+        self.plot.getAxis('top').setStyle(showValues=False)
+        self.plot.getAxis('right').setStyle(showValues=False)
+        color = '#a9a7ab'  # Cyan-like color
+        for axis in ['left', 'bottom', 'top', 'right']:
+            self.plot.getAxis(axis).setPen(pg.mkPen(color=color, width=1))
+
+        # Customize axis and ticks
+        tickFont = pg.QtGui.QFont("Arial", 16)
+        textColor = pg.mkColor(color)
+        for axis in ['left', 'bottom', 'right', 'top']:
+            self.plot.getAxis(axis).setTickFont(tickFont)
+            self.plot.getAxis(axis).setTextPen(textColor)
+
+        # Labels with custom font
+        labelFont = pg.QtGui.QFont("Arial", 16, pg.QtGui.QFont.Weight.Bold)
+        # Set x and y labels
+        self.plot.setLabel('bottom', 'Time', color="#a9a7ab")
+        self.plot.setLabel('left', 'Values', color="#a9a7ab")
+        # Set your custom font for x and y labels
+        self.plot.getAxis("bottom").label.setFont(labelFont)
+        self.plot.getAxis("left").label.setFont(labelFont)
+
+        ## Add the plot widget to the layout of GUI
         layout = self.graph_box.layout()
         layout.addWidget(self.plot_widget)
         self.plot_widget.setBackground('#25292d')  # Black background
 
+        ## Initialize the list for y-axis
         for key, value in self.log.data_dict.items():
             self.graph_data[key] = np.empty(0)
             self.x_axis_menu.addItem(f'{key}')
@@ -125,7 +162,6 @@ class GraphWindow(QWidget):
             self.y_axis_menu.addItem(item)
 
         self.x_item = self.x_axis_menu.currentText()
-        #self.y_items = [self.y_axis_menu.currentText()]
         self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
 
         self.plot_colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -156,11 +192,16 @@ class GraphWindow(QWidget):
                 else:
                     self.graph_data[keys] = np.append(self.graph_data[keys], self.log.data_dict[keys][-1])
 
-        self.plot_widget.clear()
+        # Now update or create plots as needed
         for i, y_item in enumerate(self.y_items):
-            # color = self.plot_colors[i % len(self.plot_colors)]
-            pen = pg.mkPen(color=self.plot_colors[i], width=2, style=Qt.PenStyle.SolidLine)
-            self.plot_widget.plot(self.graph_data[self.x_item], self.graph_data[y_item], name=y_item, pen=pen)
+            if y_item not in self.plot_items:  # If no plot item for this data series, create it
+                pen = pg.mkPen(color=self.plot_colors[i % len(self.plot_colors)], width=2)
+                # Create a plot item for this series and store it
+                self.plot_items[y_item] = self.plot.plot(self.graph_data[self.x_item], self.graph_data[y_item], pen=pen, name=y_item)
+            else:
+                # Update the data for an existing plot item
+                self.plot_items[y_item].setData(self.graph_data[self.x_item], self.graph_data[y_item])
+
 
     def clear_graph_button_clicked(self):
         for keys in self.graph_data.keys():

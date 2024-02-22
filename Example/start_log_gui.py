@@ -14,6 +14,3 @@ win = MainWindow(log)
 win.show()
 apply_stylesheet(app, theme='dark_teal.xml')
 app.exec()
-
-# Important in case the user has not clicked on stop before closing the window
-log.stop_logging()
