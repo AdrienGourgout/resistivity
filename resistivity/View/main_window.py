@@ -111,11 +111,6 @@ class GraphWindow(QWidget):
         layout = self.graph_box.layout()
         layout.addWidget(self.plot_widget)
         self.plot_widget.setBackground('#25292d')  # Black background
-        # # Frame with four corners
-        # self.plot_widget.showAxis('top', True)
-        # self.plot_widget.showAxis('right', True)
-        # self.plot_widget.getAxis('top').setStyle(showValues=False)
-        # self.plot_widget.getAxis('right').setStyle(showValues=False)
 
         for key, value in self.log.data_dict.items():
             self.graph_data[key] = np.empty(0)
@@ -208,7 +203,7 @@ class DevicesWindow(QWidget):
 
         #load config instruments
         self.load_config_instruments()
-    
+
         # Saving the Config in a file
         self.save_config_button.clicked.connect(self.save_config_button_clicked)
 
@@ -252,11 +247,11 @@ class DevicesWindow(QWidget):
         self.log.load_instruments()
         # Restart the logging
         self.log.keep_running = True
-        
+
         # Clear the table of the previous instruments.
         while self.table_widget.rowCount() > 0:
             self.delete_last_row()
-        # Refills the table with the new instruments.   
+        # Refills the table with the new instruments.
         self.load_config_instruments()
 
     def add_new_row(self):

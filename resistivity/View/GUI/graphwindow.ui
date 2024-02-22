@@ -76,6 +76,10 @@
     </item>
    </layout>
   </widget>
+  <zorder>label_2</zorder>
+  <zorder>y_axis_menu</zorder>
+  <zorder>widget</zorder>
+  <zorder>graph_box</zorder>
  </widget>
  <resources/>
  <connections/>

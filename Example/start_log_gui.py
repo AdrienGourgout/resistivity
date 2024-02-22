@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication
-from resistivity.View.mainwindow import MainWindow
+from resistivity.View.main_window import MainWindow
 from resistivity.Model.log_measure import LogMeasure
 from qt_material import apply_stylesheet
 import os
