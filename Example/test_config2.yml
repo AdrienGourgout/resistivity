@@ -1,0 +1,13 @@
+Measurements:
+  RR1:
+    address: None
+    instrument: Random
+    quantity: Random_1
+  RR2:
+    address: None
+    instrument: Random
+    quantity: Random_2
+Saving:
+  file: file.dat
+  path: null
+User: Adrien

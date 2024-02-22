@@ -120,7 +120,6 @@ class LogMeasure:
             if path is None:
                 path = ""
             filepath = os.path.join(path, file)
-            print(os.path.isfile(filepath))
             # Header
             if os.path.isfile(filepath) is False:
                 with open(filepath, 'a') as file:

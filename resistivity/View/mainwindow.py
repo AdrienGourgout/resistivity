@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
 import os
 from time import time
 import numpy as np
-
+import yaml
 
 class MainWindow(QMainWindow):
     def __init__(self, log=None):
@@ -205,9 +205,19 @@ class DevicesWindow(QWidget):
         self.table_widget.setHorizontalHeaderLabels(["Device", "Address", "Variable", "Name", "Load?"])
         layout.addWidget(self.table_widget)
 
+
+        #load config instruments
+        self.load_config_instruments()
+    
+        # Saving the Config in a file
+        self.save_config_button.clicked.connect(self.save_config_button_clicked)
+
+        # Load the Config from a file
         self.load_config_button.clicked.connect(self.load_config_button_clicked)
 
-        #load config instruments upon opening the window
+
+    def load_config_instruments(self):
+        # Displays in the window the instruments present in the config file.
         for label in self.log.config_dict['Measurements'].keys():
             # Creates the new row
             self.add_new_row()
@@ -217,9 +227,37 @@ class DevicesWindow(QWidget):
             self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['Measurements'][label]['address'])
             self.table_widget.cellWidget(row, 2).setCurrentText(self.log.config_dict['Measurements'][label]['quantity'])
             self.table_widget.cellWidget(row, 3).setText(label)
+            self.table_widget.cellWidget(row, 4).setText('Unload')
+            self.lock_device_line(row)
 
-            self.load_unload_button_clicked(row)
+    def save_config_button_clicked(self):
+        # Opens a browser to select a file to save the current config into.
+        config_file_path, _ = QFileDialog.getSaveFileName(self, "Select a file", "", "YAML Files (*.yml)")
+        with open(config_file_path, 'w') as f:
+            f.write(yaml.dump(self.log.config_dict, default_flow_style=False))
+        f.close()
 
+    def load_config_button_clicked(self):
+        # Opens a browser to select the config file and load it.
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select a file", "", "YAML Files (*.yml)")
+        # Stops the program from logging data while the switch is running
+        self.log.keep_running = False
+        # Load the new config
+        self.log.config_file = file_path
+        self.log.config_dict = {}
+        self.log.load_config()
+        # Reset the data and instruments dictionnaries before filling the again
+        self.log.data_dict = {'Time': np.empty(0)}
+        self.log.instruments_query = {}
+        self.log.load_instruments()
+        # Restart the logging
+        self.log.keep_running = True
+        
+        # Clear the table of the previous instruments.
+        while self.table_widget.rowCount() > 0:
+            self.delete_last_row()
+        # Refills the table with the new instruments.   
+        self.load_config_instruments()
 
     def add_new_row(self):
         # Add a row
@@ -264,18 +302,20 @@ class DevicesWindow(QWidget):
         if self.table_widget.cellWidget(row, 4).text() == 'Load':
             self.log.add_instrument(instrument, address, quantity, name)
             self.table_widget.cellWidget(row, 4).setText('Unload')
-
-            #Make the lines unchangeable
-            self.table_widget.cellWidget(row, 0).setEnabled(False)
-            self.table_widget.cellWidget(row, 1).setReadOnly(True)
-            self.table_widget.cellWidget(row, 2).setEnabled(False)
-            self.table_widget.cellWidget(row, 3).setReadOnly(True)
+            self.lock_device_line(row)
             return
 
         if self.table_widget.cellWidget(row, 4).text() == 'Unload':
             self.log.delete_instrument(name)
             self.delete_row(row)
             return
+
+    def lock_device_line(self, row):
+        #Make the lines unchangeable
+        self.table_widget.cellWidget(row, 0).setEnabled(False)
+        self.table_widget.cellWidget(row, 1).setReadOnly(True)
+        self.table_widget.cellWidget(row, 2).setEnabled(False)
+        self.table_widget.cellWidget(row, 3).setReadOnly(True)
 
     def combo_box_changed(self, row, index):
         if index == 1:
@@ -307,9 +347,7 @@ class DevicesWindow(QWidget):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
 
-    def load_config_button_clicked(self):
-        for keys, values in self.log.config_dict['Measurements'].items():
-            self.add_new_row()
+
 
 
 
@@ -325,17 +363,26 @@ class FileWindow(QWidget):
         self.log = log
 
         self.saving_file_line.setText(self.log.config_dict['Saving']['file'])
-        # self.saving_data_file_line.setText(self.log.config['Saving']['data_path'])
+        self.saving_file_line.setReadOnly(True)
 
-        self.validation_button.clicked.connect(self.validation_button_clicked)
+        self.select_file_button.clicked.connect(self.select_file_button_clicked)
 
-    def validation_button_clicked(self):
-        log_path = self.saving_file_line.text()
-        # data_path = self.saving_data_file_line.text()
 
-        self.log.config_dict['Saving']['file'] = log_path
-        # self.log.config['Saving']['data_path'] = data_path
+    def select_file_button_clicked(self):
+        log_file_path, _ = QFileDialog.getSaveFileName(self, "Select a file", "", "DAT Files (*.dat)")
+        example_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'Example')
+        total_path = os.path.relpath(log_file_path,example_path)
+        log_path, log_file = os.path.split(total_path)
+        self.saving_file_line.setText(log_file_path)
+        self.log.config_dict['Saving']['file'] = log_file
+        self.log.config_dict["Saving"]['path'] = log_path
+        print(log_file)
+        print(log_path)
 
+if __name__ == "__main__":
+    test = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    test2 = os.path.join(test, 'Example')
+    print(test2)
 
 
 # class RampParam(QWidget):
