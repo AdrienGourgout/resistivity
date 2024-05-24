@@ -1,0 +1,42 @@
+Measurements:
+  Out:
+    address: 172.22.11.2
+    channel: Output
+    instrument: SynkTek
+    quantities:
+      Amp: true
+      Freq: true
+  T+:
+    address: 172.22.11.2
+    channel: B-V1
+    instrument: SynkTek
+    quantities:
+      DC: null
+      R: null
+      X: null
+      Y: null
+      theta: null
+  T-:
+    address: 172.22.11.2
+    channel: B-V2
+    instrument: SynkTek
+    quantities:
+      DC: null
+      R: null
+      X: null
+      Y: null
+      theta: null
+  V_S:
+    address: 172.22.11.2
+    channel: A-V1
+    instrument: SynkTek
+    quantities:
+      DC: null
+      R: null
+      X: null
+      Y: null
+      theta: null
+Saving:
+  file: file.dat
+  path: null
+User: Adrien

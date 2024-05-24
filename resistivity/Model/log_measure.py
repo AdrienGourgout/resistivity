@@ -1,12 +1,16 @@
 from time import sleep, time
-from resistivity.Driver import SR830
-from resistivity.Driver.temperature_controllers import TemperatureController
+#from resistivity.Driver import SR830
+#from resistivity.Driver.temperature_controllers import TemperatureController
+#from MCLpy.MCL.MCL import MCL
+from resistivity.Model.Instruments_reading import *
 import numpy as np
 import threading
 import os
 import random
 import yaml
 from functools import partial
+
+
 
 class LogMeasure:
     def __init__ (self, config_file):
@@ -19,6 +23,7 @@ class LogMeasure:
         ## Dictionnary for the data
         self.data_dict = {}
         self.data_dict['Time'] = np.empty(0)
+        self.SkT = None
 
 
     def load_config(self):
@@ -29,8 +34,9 @@ class LogMeasure:
         for label in self.config_dict["Measurements"].keys():
             inst  = self.config_dict["Measurements"][label]["instrument"]
             adr   = self.config_dict["Measurements"][label]["address"]
-            quant = self.config_dict["Measurements"][label]["quantity"]
-            self.add_instrument(inst, adr, quant, label)
+            channel = self.config_dict["Measurements"][label]["channel"]
+            quantities = self.config_dict["Measurements"][label]["quantities"]
+            self.add_instrument(instrument=inst, address=adr, channel=channel, data_label=label, quantities=quantities)
 
     def ls350_methods(self, instr=None, quantity=None):
         if quantity == 'Temperature_A':
@@ -61,31 +67,42 @@ class LogMeasure:
             return partial(instr.randint, 1, 100)
 
 
-    def add_instrument(self, instrument=None, address=None, quantity=None, data_label=None):
+    def add_instrument(self, instrument=None, address=None, channel=None, data_label=None, quantities=None):
         """instrument is a string that defines the type of instrument: LS350
         address is a string for the adress
         quantity is a string that tells if it is: X, Y, Temperature_A, etc.
         data_label is the label of the measured stuff: XX, T0, etc."""
         if instrument == 'LS350':
             temp = TemperatureController(ip_address=address, tcp_port=7777,timeout=1000)
-            instr = self.ls350_methods(temp, quantity)
+            instr = self.ls350_methods(temp, channel)
             self.instruments_query[data_label] = instr
         if instrument == 'SR830':
             temp = SR830.device(address)
-            instr = self.sr830_methods(temp, quantity)
+            instr = self.sr830_methods(temp, channel)
             self.instruments_query[data_label] = instr
         if instrument == 'Random':
             temp = random
-            instr = self.random_methods(temp, quantity)
+            instr = self.random_methods(temp, channel)
             self.instruments_query[data_label] = instr
+
+        if instrument == "SynkTek":
+            if self.SkT == None:
+                self.SkT = SynkTek(address)
+            self.instruments_query[data_label] = self.SkT.get_values
+            
         ## Add entry to the data dictionnary
-        self.data_dict[data_label] = np.empty(0)
+        for quantity in quantities.keys():
+            label = data_label + '_' + quantity
+            self.data_dict[label] = np.empty(0)
+
+
         ## Add entry to the config dictionnary
-        if self.config_dict["Measurements"].get(data_label) == None:
-            self.config_dict["Measurements"][data_label] = {}
-            self.config_dict["Measurements"][data_label]["instrument"] = instrument
-            self.config_dict["Measurements"][data_label]["address"] = address
-            self.config_dict["Measurements"][data_label]["quantity"] = quantity
+        # if self.config_dict["Measurements"].get(data_label) == None:
+        #     self.config_dict["Measurements"][data_label] = {}
+        #     self.config_dict["Measurements"][data_label]["instrument"] = instrument
+        #     self.config_dict["Measurements"][data_label]["address"] = address
+        #     self.config_dict["Measurements"][data_label]["channel"] = channel
+        #     self.config_dict["Measurements"][data_label]["quantities"] = quantities
         ## Clear all values from the data dictionnary
         self.clear_data()
 
@@ -93,8 +110,8 @@ class LogMeasure:
     def delete_instrument(self, data_label=None):
         #Delete entries from instruments and data dictionnaries
         del self.config_dict["Measurements"][data_label]
-        del self.instruments_query[data_label]
-        del self.data_dict[data_label]
+        # del self.instruments_query[data_label]
+        # del self.data_dict[data_label]
 
     def get_values(self):
         while self.keep_running:
@@ -103,8 +120,10 @@ class LogMeasure:
             self.data_dict['Time'] = np.append(self.data_dict['Time'], current_time)
             # Data
             for data_label, data_function in self.instruments_query.items():
-                value = data_function()
-                self.data_dict[data_label] = np.append(self.data_dict[data_label], value)
+                value = data_function(self.config_dict["Measurements"][data_label]["channel"])
+                for label in value.keys():
+                    full_label = data_label + '_' + label
+                    self.data_dict[full_label] = np.append(self.data_dict[full_label], value[label])
             # Save log if saving is enabled
             if self.saving:
                 self.save_log()
@@ -148,98 +167,16 @@ class LogMeasure:
 
 
 if __name__ == "__main__":
-    log = LogMeasure('../../Example/Config.yml')
+    log = LogMeasure('../Example/Config.yml')
     log.load_config()
     log.load_instruments()
-    log.saving = True
+
     log.start_logging()
-    sleep(2)
-    log.saving = False
-    sleep(1)
+    print(log.data_dict)
+    sleep(10)
+    print(log.data_dict)
     log.stop_logging()
-    print(log.data_dict["Time"], log.data_dict["RR1"])
 
+        
 
-#   Ramp Measurement
-
-    # self.ramp_parameters = []
-    # self.is_ramping = False
-
-    # def start_ramp(self):
-    #     for quantity, name in zip(self.instr_list[2],self.instr_list[3]):
-    #         if quantity == "Temperature":
-
-    #             self.instruments[name].set_control_setpoint(1, self.config_dict['Ramp']['ramp_start_T'])
-    #             sleep(2)
-    #             self.instruments[name].set_setpoint_ramp_parameter(1, ramp_enable=True, rate_value=self.config_dict['Ramp']['ramp_speed'])
-    #             sleep(2)
-    #             self.instruments[name].set_control_setpoint(1, self.config_dict['Ramp']['ramp_end_T'])
-    #             self.is_ramping = True
-    #             sleep(15)
-    #             while self.instruments[name].get_setpoint_ramp_status(1) == True:
-    #                 sleep(5)
-    #                 print('still ramping')
-    #         break
-    #     print('ramp done')
-    #     self.is_ramping = False
-
-    # def save_ramp(self):
-    # values = np.empty(0)
-    # for key, values_list in self.data_dict.items():
-    #     if values_list.any():
-    #         np.append(values, values_list[-1])
-    # flattened_values = values.flatten()
-    # with open(self.data_file_dict[self.config_dict['Saving']['data_path']], 'a') as file2:
-    #     np.savetxt(file2, [flattened_values], delimiter = ',')
-    # file2.close()
-
-
-    # def save_data(self, filename=None):
-    #     keys = list(self.data_dict.keys())
-    #     path_folder = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    #     path_folder = os.path.join(path_folder, 'Data')
-    #     file_path = os.path.join(path_folder, filename)
-    #     base_name = file_path.split('.')[0]
-    #     ext = file_path.split('.')[-1]
-    #     i = 1
-    #     while os.path.isfile(f'{base_name}_{i:04d}.{ext}'):
-    #         i += 1
-    #     self.data_file_dict[filename] = f'{base_name}_{i:04d}.{ext}'
-    #     with open(self.data_file_dict[filename], 'w') as f:
-    #         f.write(','.join(keys) + '\n')
-    #     f.close()
-
-
-
-
-
-
-
-""" def ramp_measurement(self, config_file):
-    self.change_temperature(config_file['ramp']['ramp_start_temp'])
-    while temperature_stable == False:
-        self.temperature_stable(channel)
-        sleep(1)
-    self.ramp_temperature(channel, congig_file['ramp']['ramp_end_temp'], config_file['ramp']['ramp_speed'])
-    while temperature_stable == False:
-        self.save_data()
-        sleep(config['ramp']['ramp_delay']) """
-
-#   Steps Measurement
-
-""" def step_measurement(self, config_file):
-    self.temperature_array = np.linspace(config_file['steps']['steps_start_temp'], config_file['steps']['steps_stop_temp'], config_file['steps']['steps_num_steps'])
-    ave = config_file['steps']['steps_average']
-    for i, T in enumerate(self.temperature_array):
-        self.change_temperature(T)
-        while self.T_stable == False:
-            self.temperature_stable(channel)
-            sleep(1)
-        self.average_temp = 0
-        self.average_data = 0
-        for j in range(ave):
-            self.average_temp = self.average_temp + self.temperature
-            self.average_data = self.average_data + self.data
-        self.average_temp = self.average_temp/ave
-        self.average_data = self.average_data/ave """
 

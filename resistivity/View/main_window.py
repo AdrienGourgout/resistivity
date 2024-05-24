@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
@@ -203,6 +203,12 @@ class GraphWindow(QWidget):
                 self.plot_items[y_item].setData(self.graph_data[self.x_item], self.graph_data[y_item])
 
 
+        #Remove plots when box unchecked
+        unchecked_items = set(self.plot_items.keys()) - set(self.y_items)
+        for item_name in unchecked_items:
+            plot_item = self.plot_items.pop(item_name)
+            self.plot.removeItem(plot_item)
+
     def clear_graph_button_clicked(self):
         for keys in self.graph_data.keys():
             self.graph_data[keys] = np.empty(0)
@@ -261,7 +267,7 @@ class DevicesWindow(QWidget):
             row = self.table_widget.rowCount() - 1
             self.table_widget.cellWidget(row, 0).setCurrentText(self.log.config_dict['Measurements'][label]['instrument'])
             self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['Measurements'][label]['address'])
-            self.table_widget.cellWidget(row, 2).setCurrentText(self.log.config_dict['Measurements'][label]['quantity'])
+            self.table_widget.cellWidget(row, 2).setCurrentText(self.log.config_dict['Measurements'][label]['channel'])
             self.table_widget.cellWidget(row, 3).setText(label)
             self.table_widget.cellWidget(row, 4).setText('Unload')
             self.lock_device_line(row)
@@ -282,10 +288,9 @@ class DevicesWindow(QWidget):
         self.log.config_file = file_path
         self.log.config_dict = {}
         self.log.load_config()
-        # Reset the data and instruments dictionnaries before filling the again
+        # Reset the data and instruments dictionnaries before filling them again
         self.log.data_dict = {'Time': np.empty(0)}
         self.log.instruments_query = {}
-        self.log.load_instruments()
         # Restart the logging
         self.log.keep_running = True
 
@@ -306,7 +311,7 @@ class DevicesWindow(QWidget):
 
         # Add the instrument selection menu
         combo_box = QtWidgets.QComboBox()
-        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "Random"])  # Add your items
+        combo_box.addItems(["","Lakeshore 350", "Lock-in SR830", "Random", "SynkTek"])  # Add your items
         self.table_widget.setCellWidget(row_position, 0, combo_box)
 
         # Add a load/unload button
@@ -332,11 +337,19 @@ class DevicesWindow(QWidget):
     def load_unload_button_clicked(self, row):
         instrument = self.table_widget.cellWidget(row, 0).currentText()
         address = self.table_widget.cellWidget(row, 1).text()
-        quantity = self.table_widget.cellWidget(row, 2).currentText()
+        channel = self.table_widget.cellWidget(row, 2).currentText()
         name = self.table_widget.cellWidget(row, 3).text()
 
         if self.table_widget.cellWidget(row, 4).text() == 'Load':
-            self.log.add_instrument(instrument, address, quantity, name)
+            self.open_quantity_window(instrument, channel)
+            #self.log.add_instrument(instrument, address, quantity, name)
+            quantities = self.chosen_quantities
+            self.log.config_dict['Measurements'][name] = {}
+            self.log.config_dict["Measurements"][name]["instrument"] = instrument
+            self.log.config_dict["Measurements"][name]["address"] = address
+            self.log.config_dict["Measurements"][name]["channel"] = channel
+            self.log.config_dict["Measurements"][name]["quantities"] = quantities
+
             self.table_widget.cellWidget(row, 4).setText('Unload')
             self.lock_device_line(row)
             return
@@ -356,16 +369,26 @@ class DevicesWindow(QWidget):
     def combo_box_changed(self, row, index):
         if index == 1:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["Temperature_A","Temperature_B","Temperature_C","Temperature_D"])
-            self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['LS350']['ip_address'])
+            self.table_widget.cellWidget(row, 2).addItems(["A","B","C","D"])
+            #self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['LS350']['ip_address'])
         if index == 2:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["X", "Y", "R", "Theta"])
-            self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['SR830']['port'])
+            self.table_widget.cellWidget(row, 2).addItems([""])
+            #self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['SR830']['port'])
         if index == 3:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems(["Random_1", "Random_2", "Random_3", "Random_4"])
-            self.table_widget.cellWidget(row, 1).setText("1")
+            self.table_widget.cellWidget(row, 2).addItems(["1", "2", "3", "4"])
+            self.table_widget.cellWidget(row, 1).setText("None")
+        if index == 4:
+            self.table_widget.cellWidget(row, 2).clear()
+            self.table_widget.cellWidget(row, 2).addItems(["Output", "A-V1", "A-V2", "B-V1", "B-V2", "C-V1", "C-V2", "D-V1", "D-V2", "E-V1", "E-V2"])
+            self.table_widget.cellWidget(row, 1).setText("172.22.11.2")
+        
+    def open_quantity_window(self, instr, channel):
+        quantity_window = Quantity_choice_window(self, instr=instr, channel=channel)
+        if quantity_window.exec_() == QtWidgets.QDialog.Accepted:
+            self.chosen_quantities = quantity_window.quantities_chosen
+        
 
     #def combo_box_changed(self, row, index):
     #    self.log.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
@@ -382,6 +405,71 @@ class DevicesWindow(QWidget):
     def delete_row(self, row):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
+
+    def closeEvent(self, event):
+        print('Loading Instruments')
+        self.log.load_instruments()
+
+
+
+class Quantity_choice_window(QtWidgets.QDialog):
+    def __init__(self, parent=None, instr=None, channel=None):
+        super().__init__(parent)
+
+        self.layout = QtWidgets.QVBoxLayout()
+
+        self.label = QtWidgets.QLabel("Enter your configuration:")
+        self.layout.addWidget(self.label)
+
+        if instr == 'Lakeshore 350':
+            self.checkboxes = {}
+            quantities = ['Temperature', 'Power']
+            for quantity in quantities:
+                checkbox = QtWidgets.QCheckBox(quantity)
+                self.checkboxes[quantity] = checkbox
+                self.layout.addWidget(checkbox)
+
+        if instr == 'Lock-in SR830':
+            self.checkboxes = {}
+            quantities = ['X', 'Y', 'R', 'Theta']
+            for quantity in quantities:
+                checkbox = QtWidgets.QCheckBox(quantity)
+                self.checkboxes[quantity] = checkbox
+                self.layout.addWidget(checkbox)
+        if instr == 'Random':
+            self.checkboxes = {}
+            quantities = ['Rand_1', 'Rand_2', 'Rand_3', 'Rand_4']
+            for quantity in quantities:
+                checkbox = QtWidgets.QCheckBox(quantity)
+                self.checkboxes[quantity] = checkbox
+                self.layout.addWidget(checkbox)
+        if instr == 'SynkTek':
+            self.checkboxes = {}
+            if channel == 'Output':
+                quantities = ['Amp', 'Freq']
+                for quantity in quantities:
+                    checkbox = QtWidgets.QCheckBox(quantity)
+                    self.checkboxes[quantity] = checkbox
+                    self.layout.addWidget(checkbox)
+            else:
+                quantities = ['DC', 'X', 'Y', 'R', 'Theta']
+                for quantity in quantities:
+                    checkbox = QtWidgets.QCheckBox(quantity)
+                    self.checkboxes[quantity] = checkbox
+                    self.layout.addWidget(checkbox)
+
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.clicked.connect(self.save_config)
+        self.layout.addWidget(self.save_button)
+
+        self.setLayout(self.layout)
+
+    def save_config(self):
+        self.quantities_chosen = {}
+        for quantity, checkbox in self.checkboxes.items():
+            if checkbox.isChecked():
+                self.quantities_chosen[quantity] = True
+        self.accept()
 
 
 

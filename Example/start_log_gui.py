@@ -6,7 +6,6 @@ import os
 
 log = LogMeasure('Config.yml')
 log.load_config()
-log.load_instruments()
 
 app = QApplication([])
 win = MainWindow(log)

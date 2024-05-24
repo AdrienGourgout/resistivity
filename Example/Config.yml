@@ -1,5 +1,15 @@
 User: Adrien
 Measurements:
+  V_S:
+    address: 172.22.11.2
+    channel: A-V1
+    instrument: SynkTek
+    quantities:
+      X:
+      Y:
+      R:
+      theta:
+      DC:
   # XX:
   #   instrument: SR830
   #   quantity: X
@@ -14,14 +24,38 @@ Measurements:
   #   timeout: 1000
   #   address: '192.168.0.12'
   #   tcp_port: 7777
-  RR1:
-    instrument: Random
-    quantity: Random_1
-    address: None
-  RR2:
-    instrument: Random
-    quantity: Random_2
-    address: None
+  # RR1:
+  #   instrument: Random
+  #   channel: Random_1
+  #   address: None
+  #   quantities:
+  #     Rand1:
+  # RR2:
+  #   instrument: Random
+  #   channel: Random_2
+  #   address: None
+  #   quantities:
+  #     Rand1:
+  T+:
+    address: 172.22.11.2
+    channel: B-V1
+    instrument: SynkTek
+    quantities:
+      X:
+      Y:
+      R:
+      theta:
+      DC:
+  T-:
+    address: 172.22.11.2
+    channel: B-V2
+    instrument: SynkTek
+    quantities:
+      X:
+      Y:
+      R:
+      theta:
+      DC:
   
 
 
