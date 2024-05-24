@@ -373,7 +373,7 @@ class DevicesWindow(QWidget):
             #self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['LS350']['ip_address'])
         if index == 2:
             self.table_widget.cellWidget(row, 2).clear()
-            self.table_widget.cellWidget(row, 2).addItems([""])
+            self.table_widget.cellWidget(row, 2).addItems(["None"])
             #self.table_widget.cellWidget(row, 1).setText(self.log.config_dict['SR830']['port'])
         if index == 3:
             self.table_widget.cellWidget(row, 2).clear()
@@ -421,7 +421,7 @@ class Quantity_choice_window(QtWidgets.QDialog):
         self.label = QtWidgets.QLabel("Enter your configuration:")
         self.layout.addWidget(self.label)
 
-        if instr == 'Lakeshore 350':
+        if instr == "Lakeshore 350":
             self.checkboxes = {}
             quantities = ['Temperature', 'Power']
             for quantity in quantities:
@@ -429,14 +429,14 @@ class Quantity_choice_window(QtWidgets.QDialog):
                 self.checkboxes[quantity] = checkbox
                 self.layout.addWidget(checkbox)
 
-        if instr == 'Lock-in SR830':
+        if instr == "Lock-in SR830":
             self.checkboxes = {}
             quantities = ['X', 'Y', 'R', 'Theta']
             for quantity in quantities:
                 checkbox = QtWidgets.QCheckBox(quantity)
                 self.checkboxes[quantity] = checkbox
                 self.layout.addWidget(checkbox)
-        if instr == 'Random':
+        if instr == "Random":
             self.checkboxes = {}
             quantities = ['Rand_1', 'Rand_2', 'Rand_3', 'Rand_4']
             for quantity in quantities:

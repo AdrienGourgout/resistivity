@@ -72,16 +72,16 @@ class LogMeasure:
         address is a string for the adress
         quantity is a string that tells if it is: X, Y, Temperature_A, etc.
         data_label is the label of the measured stuff: XX, T0, etc."""
-        if instrument == 'LS350':
-            temp = TemperatureController(ip_address=address, tcp_port=7777,timeout=1000)
-            instr = self.ls350_methods(temp, channel)
-            self.instruments_query[data_label] = instr
-        if instrument == 'SR830':
-            temp = SR830.device(address)
-            instr = self.sr830_methods(temp, channel)
-            self.instruments_query[data_label] = instr
-        if instrument == 'Random':
-            temp = random
+        if instrument == "Lakeshore 350":
+            self.LS350 = LakeShore350(address=address, tcp_port=7777,timeout=1000)
+            self.instruments_query[data_label] = self.LS350.get_values
+
+        if instrument == "Lock-in SR830":
+            self.SR830 = lockin_SR830(address)
+            self.instruments_query[data_label] = self.SR830.get_values
+
+        if instrument == "Random":
+            self.random = Random_int(address)
             instr = self.random_methods(temp, channel)
             self.instruments_query[data_label] = instr
 
@@ -123,7 +123,8 @@ class LogMeasure:
                 value = data_function(self.config_dict["Measurements"][data_label]["channel"])
                 for label in value.keys():
                     full_label = data_label + '_' + label
-                    self.data_dict[full_label] = np.append(self.data_dict[full_label], value[label])
+                    if full_label in self.data_dict:
+                        self.data_dict[full_label] = np.append(self.data_dict[full_label], value[label])
             # Save log if saving is enabled
             if self.saving:
                 self.save_log()
