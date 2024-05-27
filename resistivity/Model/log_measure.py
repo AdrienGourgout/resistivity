@@ -1,7 +1,5 @@
 from time import sleep, time
-#from resistivity.Driver import SR830
-#from resistivity.Driver.temperature_controllers import TemperatureController
-#from MCLpy.MCL.MCL import MCL
+from Analysis.Seebeck import Seebeck_analysis
 from resistivity.Model.Instruments_reading import *
 import numpy as np
 import threading
@@ -24,6 +22,8 @@ class LogMeasure:
         self.data_dict = {}
         self.data_dict['Time'] = np.empty(0)
         self.SkT = None
+        self.seebeck_calculation = False
+        self.S_calc_class = None
 
 
     def load_config(self):
@@ -37,34 +37,12 @@ class LogMeasure:
             channel = self.config_dict["Measurements"][label]["channel"]
             quantities = self.config_dict["Measurements"][label]["quantities"]
             self.add_instrument(instrument=inst, address=adr, channel=channel, data_label=label, quantities=quantities)
-
-    def ls350_methods(self, instr=None, quantity=None):
-        if quantity == 'Temperature_A':
-            return partial(instr.get_kelvin_reading, input_channel=1)
-        if quantity == 'Temperature_B':
-            return partial(instr.get_kelvin_reading, input_channel=2)
-        if quantity == 'Temperature_C':
-            return partial(instr.get_kelvin_reading, input_channel=3)
-        if quantity == 'Temperature_D':
-            return partial(instr.get_kelvin_reading, input_channel=4)
-
-    def sr830_methods(self, instr=None, quantity=None):
-        if quantity == 'X':
-            return instr.get_X
-        if quantity == 'Y':
-            return instr.get_Y
-        if quantity == 'R':
-            return instr.get_R
-        if quantity == 'theta':
-            return instr.get_Theta
-
-    def random_methods(self, instr=None, quantity=None):
-        if quantity == 'Random_1':
-            return partial(instr.randint, 1, 100)
-        if quantity == 'Random_2':
-            return partial(instr.randint, 1, 100)
-        if quantity == 'Random_3':
-            return partial(instr.randint, 1, 100)
+        self.load_analysis(self)
+    
+    def load_analysis(self):
+        if self.seebeck_calculation == True:
+            self.S_calc_class = Seebeck_analysis(self.data_dict)
+        
 
 
     def add_instrument(self, instrument=None, address=None, channel=None, data_label=None, quantities=None):
@@ -82,8 +60,7 @@ class LogMeasure:
 
         if instrument == "Random":
             self.random = Random_int(address)
-            instr = self.random_methods(temp, channel)
-            self.instruments_query[data_label] = instr
+            self.instruments_query[data_label] = self.random.get_values
 
         if instrument == "SynkTek":
             if self.SkT == None:

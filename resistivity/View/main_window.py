@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.start_button.clicked.connect(self.log.start_logging)
         self.stop_button.clicked.connect(self.log.stop_logging)
         self.save_data_checkbox.stateChanged.connect(self.save_data)
+        self.analysis_checkbox.stateChanged.connect(self.analysis_checkbox_changed)
         self.open_graph_button.clicked.connect(self.open_graph_window)
         self.open_devices_button.clicked.connect(self.open_devices_window)
         self.open_file_button.clicked.connect(self.open_file_window)
@@ -53,9 +54,21 @@ class MainWindow(QMainWindow):
         if self.window_file == None:
             self.window_file = FileWindow(self.log)
         self.window_file.show()
+    
+    def analysis_checkbox_changed(self):
+        self.analysis_window = AnalysisWindow(self)
+        if self.analysis_window.exec_() == QtWidgets.QDialog.Accepted:
+            self.log.config_dict['Analysis']['Seebeck'] = self.analysis_window.seebeck_checkbox.isChecked()
+        if self.log.config_dict['Analysis']['Seebeck'] == True:
+            print('It works')
 
     def save_data(self):
-        self.log.saving = self.save_data_checkbox.isChecked()
+        if self.save_data_checkbox.isChecked():
+            self.window_file = FileWindow(self.log)
+            if self.window_file.exec_() == QtWidgets.QDialog.Accepted:
+                self.log.saving = self.save_data_checkbox.isChecked()
+        else:
+            self.log.saving = self.save_data_checkbox.isChecked()
 
     def update_window(self):
         if self.log.keep_running:
@@ -88,8 +101,37 @@ class MainWindow(QMainWindow):
 
     #         self.log.start_ramp()
 
+class AnalysisWindow(QtWidgets.QDialog):
+    def __init__(self, parent=None, log=None):
+        super().__init__(parent)
 
+        self.layout = QtWidgets.QVBoxLayout()
+        
 
+        self.label = QtWidgets.QLabel("Quantity to analyze:")
+        self.layout.addWidget(self.label)
+        self.seebeck_checkbox = QtWidgets.QCheckBox('Seebeck')
+        self.layout.addWidget(self.seebeck_checkbox)
+
+        self.validate_button = QtWidgets.QPushButton('Validate')
+        self.layout.addWidget(self.validate_button)
+
+        self.setLayout(self.layout)
+
+        self.validate_button.clicked.connect(self.validate_button_clicked)
+    
+    def validate_button_clicked(self):
+        
+        self.accept()
+
+class Matching(QtWidgets.QDialog):
+    def __init__(self, parent=None, log=None):
+        super().__init__(parent)
+        self.log = log
+        self.layout = QtWidgets.QVBoxLayout()
+        for names in self.log.config_dict['Measurements'].keys():
+            self.button = QtWidgets.QPushButton(names)
+            self.layout.addWidget(self.button)
 
 
 
@@ -476,7 +518,7 @@ class Quantity_choice_window(QtWidgets.QDialog):
 
 
 
-class FileWindow(QWidget):
+class FileWindow(QtWidgets.QDialog):
     def __init__(self, log=None):
         super().__init__()
 
@@ -502,6 +544,7 @@ class FileWindow(QWidget):
         self.log.config_dict["Saving"]['path'] = log_path
         print(log_file)
         print(log_path)
+        self.accept()
 
 if __name__ == "__main__":
     test = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
