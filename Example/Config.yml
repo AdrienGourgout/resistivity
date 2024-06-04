@@ -1,15 +1,9 @@
 User: Adrien
 Measurements:
-  V_S:
+  VS:
     address: 172.22.11.2
-    channel: A-V1
     instrument: SynkTek
-    quantities:
-      X:
-      Y:
-      R:
-      theta:
-      DC:
+    quantities: ["A-V1_L1_X", "A-V1_L1_Y", "A-V1_L1_DC"]
   # XX:
   #   instrument: SR830
   #   quantity: X
@@ -20,7 +14,7 @@ Measurements:
   #   address: ASRL4::INSTR
   # T0:
   #   instrument: LS350
-  #   quantity: Temperature
+  #   quantity: ["Temperature_A"]
   #   timeout: 1000
   #   address: '192.168.0.12'
   #   tcp_port: 7777
@@ -56,7 +50,7 @@ Measurements:
       R:
       theta:
       DC:
-  
+
 
 
 # Saving info:
