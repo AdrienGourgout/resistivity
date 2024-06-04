@@ -37,7 +37,7 @@ class LogMeasure:
             channel = self.config_dict["Measurements"][label]["channel"]
             quantities = self.config_dict["Measurements"][label]["quantities"]
             self.add_instrument(instrument=inst, address=adr, channel=channel, data_label=label, quantities=quantities)
-        self.load_analysis(self)
+        # self.load_analysis(self)
     
     def load_analysis(self):
         if self.seebeck_calculation == True:
