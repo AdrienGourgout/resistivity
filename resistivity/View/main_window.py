@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         if self.window_file == None:
             self.window_file = FileWindow(self.log)
         self.window_file.show()
-    
+
     def analysis_checkbox_changed(self):
         self.analysis_window = AnalysisWindow(self)
         if self.analysis_window.exec_() == QtWidgets.QDialog.Accepted:
@@ -82,31 +82,14 @@ class MainWindow(QMainWindow):
         """Override the closeEvent (when the user press on the close button)"""
         self.log.stop_logging()
 
-    ## Ramp buttons:
-    # self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
 
-    # def open_ramp_parameters_menu_button_clicked(self):
-    #     if self.ramp_parameters_window == None:
-    #         self.ramp_parameters_window = RampParam(self.log)
-    #     self.ramp_parameters_window.show()
-
-    # def start_ramp_button_clicked(self):
-    #     data_path = {self.log.config['Saving']['data_path']: None}
-    #     self.log.data_file_dict.update(data_path)
-    #     self.log.save_data(self.log.config['Saving']['data_path'])
-    #     for start, stop, speed in zip(self.log.ramp_parameters[0], self.log.ramp_parameters[1], self.log.ramp_parameters[2]):
-    #         self.log.config['Ramp']['ramp_start_T'] = start
-    #         self.log.config['Ramp']['ramp_end_T'] = stop
-    #         self.log.config['Ramp']['ramp_speed'] = speed
-
-    #         self.log.start_ramp()
 
 class AnalysisWindow(QtWidgets.QDialog):
     def __init__(self, parent=None, log=None):
         super().__init__(parent)
 
         self.layout = QtWidgets.QVBoxLayout()
-        
+
 
         self.label = QtWidgets.QLabel("Quantity to analyze:")
         self.layout.addWidget(self.label)
@@ -119,9 +102,9 @@ class AnalysisWindow(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
         self.validate_button.clicked.connect(self.validate_button_clicked)
-    
+
     def validate_button_clicked(self):
-        
+
         self.accept()
 
 class Matching(QtWidgets.QDialog):
@@ -425,12 +408,12 @@ class DevicesWindow(QWidget):
             self.table_widget.cellWidget(row, 2).clear()
             self.table_widget.cellWidget(row, 2).addItems(["Output", "A-V1", "A-V2", "B-V1", "B-V2", "C-V1", "C-V2", "D-V1", "D-V2", "E-V1", "E-V2"])
             self.table_widget.cellWidget(row, 1).setText("172.22.11.2")
-        
+
     def open_quantity_window(self, instr, channel):
         quantity_window = Quantity_choice_window(self, instr=instr, channel=channel)
         if quantity_window.exec_() == QtWidgets.QDialog.Accepted:
             self.chosen_quantities = quantity_window.quantities_chosen
-        
+
 
     #def combo_box_changed(self, row, index):
     #    self.log.instr_list[0].append(self.table_widget.cellWidget(row, 0).currentText())
