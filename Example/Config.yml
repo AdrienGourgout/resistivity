@@ -1,15 +1,15 @@
 User: Adrien
 Measurements:
-  V_S:
-    address: 172.22.11.2
-    channel: A-V1
-    instrument: SynkTek
-    quantities:
-      X:
-      Y:
-      R:
-      theta:
-      DC:
+  # V_S:
+  #   address: 172.22.11.2
+  #   channel: A-V1
+  #   instrument: SynkTek
+  #   quantities:
+  #     X:
+  #     Y:
+  #     R:
+  #     theta:
+  #     DC:
   # XX:
   #   instrument: SR830
   #   quantity: X
@@ -36,27 +36,38 @@ Measurements:
   #   address: None
   #   quantities:
   #     Rand1:
-  T+:
-    address: 172.22.11.2
-    channel: B-V1
-    instrument: SynkTek
+  # T+:
+  #   address: 172.22.11.2
+  #   channel: B-V1
+  #   instrument: SynkTek
+  #   quantities:
+  #     X:
+  #     Y:
+  #     R:
+  #     theta:
+  #     DC:
+  # T-:
+  #   address: 172.22.11.2
+  #   channel: B-V2
+  #   instrument: SynkTek
+  #   quantities:
+  #     X:
+  #     Y:
+  #     R:
+  #     theta:
+  #     DC:
+  RR1:
+    address: None
+    channel: '1'
+    instrument: Random
     quantities:
-      X:
-      Y:
-      R:
-      theta:
-      DC:
-  T-:
-    address: 172.22.11.2
-    channel: B-V2
-    instrument: SynkTek
+      Rand_1: true
+  RR2:
+    address: None
+    channel: '2'
+    instrument: Random
     quantities:
-      X:
-      Y:
-      R:
-      theta:
-      DC:
-  
+      Rand_2: true
 
 
 # Saving info:

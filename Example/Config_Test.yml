@@ -1,13 +1,18 @@
 Analysis:
   Seebeck: false
 Measurements:
-  Out:
-    address: 172.22.11.2
-    channel: Output
-    instrument: SynkTek
+  RR1:
+    address: None
+    channel: '1'
+    instrument: Random
     quantities:
-      Amp: true
-      Freq: true
+      Rand_1: true
+  RR2:
+    address: None
+    channel: '2'
+    instrument: Random
+    quantities:
+      Rand_2: true
   T+:
     address: 172.22.11.2
     channel: B-V1
@@ -28,13 +33,6 @@ Measurements:
       X: null
       Y: null
       theta: null
-  Test:
-    address: 172.22.11.2
-    channel: A-V2
-    instrument: SynkTek
-    quantities:
-      X: true
-      Y: true
   V_S:
     address: 172.22.11.2
     channel: A-V1

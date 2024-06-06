@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog
+from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog, QGridLayout
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         self.window_graph_list = []
 
         ## Buttons
-        self.start_button.clicked.connect(self.log.start_logging)
+        self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.log.stop_logging)
         self.save_data_checkbox.stateChanged.connect(self.save_data)
         self.analysis_checkbox.stateChanged.connect(self.analysis_checkbox_changed)
@@ -38,6 +38,11 @@ class MainWindow(QMainWindow):
         self.timer.start(50) # trigger timout every 50 ms. There is no point to do
                             # more often because the monitor won't really refresh
                             # faster than 20 Hz, maybe twice faster.
+    
+    def start_button_clicked(self):
+        self.log.load_instruments()
+        self.log.start_logging()
+
 
     def open_graph_window(self):
         # if self.log.keep_running == False:
@@ -124,14 +129,14 @@ class AnalysisWindow(QtWidgets.QDialog):
         
         self.accept()
 
-class Matching(QtWidgets.QDialog):
-    def __init__(self, parent=None, log=None):
-        super().__init__(parent)
-        self.log = log
-        self.layout = QtWidgets.QVBoxLayout()
-        for names in self.log.config_dict['Measurements'].keys():
-            self.button = QtWidgets.QPushButton(names)
-            self.layout.addWidget(self.button)
+# class Matching(QtWidgets.QDialog):
+#     def __init__(self, parent=None, log=None):
+#         super().__init__(parent)
+#         self.log = log
+#         self.layout = QtWidgets.QVBoxLayout()
+#         for names in self.log.config_dict['Measurements'].keys():
+#             self.button = QtWidgets.QPushButton(names)
+#             self.layout.addWidget(self.button)
 
 
 
@@ -148,65 +153,54 @@ class GraphWindow(QWidget):
         self.y_axis = {}
         self.graph_data = {}
         self.graph_initial_time = 0
+        self.del_button = None
 
-        # Create the main window
-        self.plot_widget = pg.GraphicsLayoutWidget(show=True, title='Continuous Data Plot')
-        self.plot_widget.resize(800, 600)
-        self.plot_widget.setBackground('k')  # Black background
-
-        # Create and store a reference to a plot item
-        self.plot = self.plot_widget.addPlot()
         self.plot_items = {}  # Dictionary to hold plot items for each data series
 
-        pg.setConfigOptions(antialias=True)  # Enable anti-aliasing for smoother lines
+        self.color_graph = "#a9a7ab"        ## Initialize the graph plot
+        self.init_plot()
 
-        # Customize plot appearance
-        self.plot.showAxis('top', True)
-        self.plot.showAxis('right', True)
-        self.plot.getAxis('top').setStyle(showValues=False)
-        self.plot.getAxis('right').setStyle(showValues=False)
-        color = '#a9a7ab'  # Cyan-like color
-        for axis in ['left', 'bottom', 'top', 'right']:
-            self.plot.getAxis(axis).setPen(pg.mkPen(color=color, width=1))
+        # Create a Table Widget in the y_axis_menu
 
-        # Customize axis and ticks
-        tickFont = pg.QtGui.QFont("Arial", 16)
-        textColor = pg.mkColor(color)
-        for axis in ['left', 'bottom', 'right', 'top']:
-            self.plot.getAxis(axis).setTickFont(tickFont)
-            self.plot.getAxis(axis).setTextPen(textColor)
+        y_layout = self.y_axis_menu.layout()
 
-        # Labels with custom font
-        labelFont = pg.QtGui.QFont("Arial", 16, pg.QtGui.QFont.Weight.Bold)
-        # Set x and y labels
-        self.plot.setLabel('bottom', 'Time', color="#a9a7ab")
-        self.plot.setLabel('left', 'Values', color="#a9a7ab")
-        # Set your custom font for x and y labels
-        self.plot.getAxis("bottom").label.setFont(labelFont)
-        self.plot.getAxis("left").label.setFont(labelFont)
+        self.y_table_widget = QtWidgets.QTableWidget()
+        self.y_table_widget.setColumnCount(4)
+        self.y_axis_menu.setMinimumSize(400, 300)
+        # self.y_table_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        y_layout.addWidget(self.y_table_widget)
+        # Hide the numbers of rows/columns
+        self.y_table_widget.verticalHeader().setVisible(False)
+        self.y_table_widget.horizontalHeader().setVisible(False)
 
-        ## Add the plot widget to the layout of GUI
-        layout = self.graph_box.layout()
-        layout.addWidget(self.plot_widget)
-        self.plot_widget.setBackground('#25292d')  # Black background
+        # Make the first button to create a new plot
+        row_position = self.y_table_widget.rowCount()
+        self.y_table_widget.insertRow(row_position)
 
-        ## Initialize the list for y-axis
+
+        self.add_entry_button = QtWidgets.QPushButton('New')
+        self.y_table_widget.setCellWidget(row_position, 0, self.add_entry_button)
+        self.add_entry_button.clicked.connect(lambda state, row=row_position: self.add_entry_button_clicked(row))
+
+
+        # Initialize the list for y-axis
         for key, value in self.log.data_dict.items():
             self.graph_data[key] = np.empty(0)
             self.x_axis_menu.addItem(f'{key}')
-            item = QListWidgetItem(f'{key}')
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            if key != "Time":
-                item.setCheckState(Qt.Checked)
-            else:
-                item.setCheckState(Qt.Unchecked)
-            self.y_axis[key] = []
-            self.y_axis_menu.addItem(item)
+            # item = QListWidgetItem(f'{key}')
+            # item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            # if key != "Time":
+            #     item.setCheckState(Qt.Checked)
+            # else:
+            #     item.setCheckState(Qt.Unchecked)
+            # self.y_axis[key] = []
+            # self.y_axis_menu.addItem(item)
 
         self.x_item = self.x_axis_menu.currentText()
-        self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
-
-        self.plot_colors = ['r', 'g', 'b', 'c', 'm', 'y']
+        # self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
+        self.fill_y_items()
+        self.plot_colors = ['#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#FFFF00']  # Hex color codes
+        self.assigned_colors = {}
 
         self.timer = QTimer()
         #if self.log.keep_running == True:
@@ -214,9 +208,154 @@ class GraphWindow(QWidget):
         self.timer.start(int(self.log.time_steps*1e3))
 
         self.x_axis_menu.currentIndexChanged.connect(self.x_axis_menu_index_changed)
-        self.y_axis_menu.itemChanged.connect(self.y_axis_menu_index_changed)
+        #self.y_axis_menu.itemChanged.connect(self.y_axis_menu_index_changed)
         self.clear_graph_button.clicked.connect(self.clear_graph_button_clicked)
 
+        # Crosshair lines
+        pen = pg.mkPen(self.color_graph, width=1, style=Qt.DashLine)
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pen)
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pen)
+        self.plot.addItem(self.vLine, ignoreBounds=True)
+        self.plot.addItem(self.hLine, ignoreBounds=True)
+
+        # Connect the mouse move event
+        self.proxy = pg.SignalProxy(self.plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
+
+        # QLabel for displaying coordinates
+        self.coord_label = QtWidgets.QLabel(self.plot_widget)
+        self.coord_label.setStyleSheet("QLabel { color :" + self.color_graph + "; background-color: rgba(0, 0, 0, 0); }")
+        self.coord_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
+
+        # Initial resize to position the label correctly
+        self.resizeLabel()
+
+        # Ensure the label stays in the correct position when the widget is resized
+        self.plot_widget.resizeEvent = self.resizeEvent
+
+    def mouseMoved(self, evt):
+        pos = evt[0]  # using signal proxy turns original arguments into a tuple
+        if self.plot.sceneBoundingRect().contains(pos):
+            mouse_point = self.plot.vb.mapSceneToView(pos)
+            self.vLine.setPos(mouse_point.x())
+            self.hLine.setPos(mouse_point.y())
+            self.coord_label.setText(f"({mouse_point.x():.2g}, {mouse_point.y():.2g})")
+
+    def resizeEvent(self, event):
+        super(pg.GraphicsLayoutWidget, self.plot_widget).resizeEvent(event)
+        self.resizeLabel()
+
+    def resizeLabel(self):
+        # Position and size the QLabel
+        self.coord_label.setGeometry(self.plot_widget.width() - 120, self.plot_widget.height() - 30, 100, 20)
+
+
+    def init_plot(self):
+        self.plot_widget = pg.GraphicsLayoutWidget(show=True)
+        self.plot = self.plot_widget.addPlot()
+        ## Add the plot widget to the layout of GUI
+        layout = self.graph_box.layout()
+        layout.addWidget(self.plot_widget)
+        self.plot_widget.setBackground('#25292d')  # Black background
+        # Enable anti-aliasing for smoother lines
+        pg.setConfigOptions(antialias=True)
+        # Customize plot appearance
+        self.plot.showAxis('top', True)
+        self.plot.showAxis('right', True)
+        self.plot.getAxis('top').setStyle(showValues=False)
+        self.plot.getAxis('right').setStyle(showValues=False)
+        color = self.color_graph  # Cyan-like color
+        for axis in ['left', 'bottom', 'top', 'right']:
+            self.plot.getAxis(axis).setPen(pg.mkPen(color=color, width=1))
+        # Customize axis and ticks
+        tickFont = pg.QtGui.QFont("Arial", 16)
+        textColor = pg.mkColor(color)
+        for axis in ['left', 'bottom', 'right', 'top']:
+            self.plot.getAxis(axis).setTickFont(tickFont)
+            self.plot.getAxis(axis).setTextPen(textColor)
+        # Labels with custom font
+        labelFont = pg.QtGui.QFont("Arial", 16, pg.QtGui.QFont.Weight.Bold)
+        # Set x and y labels
+        self.plot.setLabel('bottom', 'Time', color=self.color_graph)
+        self.plot.setLabel('left', 'Values', color=self.color_graph)
+        # Set your custom font for x and y labels
+        self.plot.getAxis("bottom").label.setFont(labelFont)
+        self.plot.getAxis("left").label.setFont(labelFont)
+
+    def add_entry_button_clicked(self, row):
+        #add a check box to display the graph or not
+        display_checkbox = QtWidgets.QCheckBox('Show')
+        display_checkbox.stateChanged.connect(lambda state, row=row: self.update_plot_color(row, state))
+        self.y_table_widget.setCellWidget(row, 0, display_checkbox)
+
+        #add a scroll menu to select quantity to display
+        self.y_combobox = QtWidgets.QComboBox()
+        self.y_combobox.addItems(self.log.data_dict.keys())
+        self.y_combobox.currentIndexChanged.connect(self.fill_y_items)
+        self.y_table_widget.setCellWidget(row, 1, self.y_combobox)
+
+        #add the colour of the corresponding line in the graph
+        self.line = QtWidgets.QFrame()
+        self.line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.y_table_widget.setCellWidget(row, 2, self.line)
+
+        #add the delete button
+        del_button = QtWidgets.QPushButton('Del')
+        del_button.clicked.connect(lambda state, row=row: self.del_button_clicked(row))
+        self.y_table_widget.setCellWidget(row, 3, del_button)
+
+        #add the next add row button
+        row = self.y_table_widget.rowCount()
+        self.y_table_widget.insertRow(row)
+        self.add_entry_button = QtWidgets.QPushButton('New')
+        self.y_table_widget.setCellWidget(row, 0, self.add_entry_button)
+        self.add_entry_button.clicked.connect(lambda state, row=row: self.add_entry_button_clicked(row))
+
+        #Attempt to resize the window lol
+        # self.resize_y_axis_menu()
+
+    def del_button_clicked(self, row):
+        self.y_table_widget.removeRow(row)
+        updated_row = self.y_table_widget.rowCount()-1
+        self.y_table_widget.removeRow(updated_row)
+        self.y_table_widget.insertRow(updated_row)
+        self.add_entry_button = QtWidgets.QPushButton('New')
+        self.y_table_widget.setCellWidget(updated_row, 0, self.add_entry_button)
+        self.add_entry_button.clicked.connect(lambda state, row=updated_row: self.add_entry_button_clicked(row))
+        # self.resize_y_axis_menu()
+
+    def fill_y_items(self):
+        self.y_items = []
+
+        for i in range(self.y_table_widget.rowCount()):
+            if self.y_table_widget.cellWidget(i, 0).isChecked():
+                y_item = self.y_table_widget.cellWidget(i, 1).currentText()
+                self.y_items.append(y_item)
+                if y_item not in self.assigned_colors:
+                    color = self.plot_colors[len(self.assigned_colors) % len(self.plot_colors)]
+                    self.assigned_colors[y_item] = color
+                else:
+                    color = self.assigned_colors[y_item]
+
+                # Update the QFrame color
+                self.y_table_widget.cellWidget(i, 2).setStyleSheet(f"background-color: {color};")
+
+    def update_plot_color(self, row, state):
+        if state == Qt.Checked:
+            y_item = self.y_table_widget.cellWidget(row, 1).currentText()
+            if y_item not in self.assigned_colors:
+                color = self.plot_colors[len(self.assigned_colors) % len(self.plot_colors)]
+                self.assigned_colors[y_item] = color
+            else:
+                color = self.assigned_colors[y_item]
+
+         # Update the QFrame color
+            self.y_table_widget.cellWidget(row, 2).setStyleSheet(f"background-color: {color};")
+        else:
+            # If unchecked, reset the QFrame color
+            self.y_table_widget.cellWidget(row, 2).setStyleSheet("background-color: none;")
+
+        # Update the plot items
+        self.fill_y_items()
     def x_axis_menu_index_changed(self):
         self.x_item = self.x_axis_menu.currentText()
         self.plot_widget.setLabel('bottom',self.x_axis_menu.currentText())
@@ -225,27 +364,22 @@ class GraphWindow(QWidget):
         self.y_items = [self.y_axis_menu.item(i).text() for i in range(self.y_axis_menu.count()) if self.y_axis_menu.item(i).checkState() == Qt.Checked]
 
     def update_plot(self):
-        if self.log.keep_running == True:
-            for keys in self.graph_data.keys():
-                # Time
-                if keys == 'Time':
-                    current_time = self.graph_data["Time"][-1] + self.log.time_steps if self.graph_data["Time"].size else 0
-                    self.graph_data['Time'] = np.append(self.graph_data["Time"], current_time)
+        if self.log.keep_running:
+            for key in self.graph_data.keys():
+                if key == 'Time':
+                    current_time = self.graph_data['Time'][-1] + self.log.time_steps if self.graph_data['Time'].size else 0
+                    self.graph_data['Time'] = np.append(self.graph_data['Time'], current_time)
                 else:
-                    self.graph_data[keys] = np.append(self.graph_data[keys], self.log.data_dict[keys][-1])
+                    self.graph_data[key] = np.append(self.graph_data[key], self.log.data_dict[key][-1])
 
-        # Now update or create plots as needed
         for i, y_item in enumerate(self.y_items):
-            if y_item not in self.plot_items:  # If no plot item for this data series, create it
-                pen = pg.mkPen(color=self.plot_colors[i % len(self.plot_colors)], width=2)
-                # Create a plot item for this series and store it
+            color = self.assigned_colors.get(y_item, 'k')  # Default to black if not assigned
+            pen = pg.mkPen(color=color, width=2)
+            if y_item not in self.plot_items:
                 self.plot_items[y_item] = self.plot.plot(self.graph_data[self.x_item], self.graph_data[y_item], pen=pen, name=y_item)
             else:
-                # Update the data for an existing plot item
                 self.plot_items[y_item].setData(self.graph_data[self.x_item], self.graph_data[y_item])
 
-
-        #Remove plots when box unchecked
         unchecked_items = set(self.plot_items.keys()) - set(self.y_items)
         for item_name in unchecked_items:
             plot_item = self.plot_items.pop(item_name)
@@ -372,7 +506,7 @@ class DevicesWindow(QWidget):
         # Connect signals for interaction with cell contents
         #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
         #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
-        #checkbox.stateChanged.connect(lambda _, row=row_position: self.load_checkbox_changed(row))
+        #.stateChanged.conncheckboxect(lambda _, row=row_position: self.load_checkbox_changed(row))
         load_unload_button.clicked.connect(lambda _, row=row_position: self.load_unload_button_clicked(row))
         combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
 
@@ -448,20 +582,12 @@ class DevicesWindow(QWidget):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
 
-    def closeEvent(self, event):
-        print('Loading Instruments')
-        self.log.load_instruments()
-
-
 
 class Quantity_choice_window(QtWidgets.QDialog):
     def __init__(self, parent=None, instr=None, channel=None):
         super().__init__(parent)
 
-        self.layout = QtWidgets.QVBoxLayout()
-
-        self.label = QtWidgets.QLabel("Enter your configuration:")
-        self.layout.addWidget(self.label)
+        self.layout = QtWidgets.QGridLayout()
 
         if instr == "Lakeshore 350":
             self.checkboxes = {}
@@ -494,11 +620,18 @@ class Quantity_choice_window(QtWidgets.QDialog):
                     self.checkboxes[quantity] = checkbox
                     self.layout.addWidget(checkbox)
             else:
+                self.label_1 = QtWidgets.QLabel("Lock-in 1")
+                self.layout.addWidget(self.label_1, 0, 0)
+                self.label_2 = QtWidgets.QLabel("Lock-in 2")
+                self.layout.addWidget(self.label_2, 0, 1)
+                
                 quantities = ['DC', 'X', 'Y', 'R', 'Theta']
-                for quantity in quantities:
-                    checkbox = QtWidgets.QCheckBox(quantity)
-                    self.checkboxes[quantity] = checkbox
-                    self.layout.addWidget(checkbox)
+                for j in [1,2]:
+                    for i, quantity in enumerate(quantities):
+                        checkbox = QtWidgets.QCheckBox(quantity)
+                        label = "L" + str(j) + "_" + quantity
+                        self.checkboxes[label] = checkbox
+                        self.layout.addWidget(checkbox,i+1,j-1)
 
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.clicked.connect(self.save_config)

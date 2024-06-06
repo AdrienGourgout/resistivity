@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>809</width>
+    <width>994</width>
     <height>498</height>
    </rect>
   </property>
@@ -27,7 +27,7 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>705</x>
+     <x>790</x>
      <y>10</y>
      <width>41</width>
      <height>16</height>
@@ -37,22 +37,12 @@
     <string>Y axis</string>
    </property>
   </widget>
-  <widget class="QListWidget" name="y_axis_menu">
-   <property name="geometry">
-    <rect>
-     <x>670</x>
-     <y>30</y>
-     <width>121</width>
-     <height>401</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QWidget" name="widget" native="true">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>440</y>
-     <width>791</width>
+     <width>971</width>
      <height>44</height>
     </rect>
    </property>
@@ -76,10 +66,21 @@
     </item>
    </layout>
   </widget>
+  <widget class="QWidget" name="y_axis_menu" native="true">
+   <property name="geometry">
+    <rect>
+     <x>669</x>
+     <y>29</y>
+     <width>311</width>
+     <height>411</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout"/>
+  </widget>
   <zorder>label_2</zorder>
-  <zorder>y_axis_menu</zorder>
   <zorder>widget</zorder>
   <zorder>graph_box</zorder>
+  <zorder>y_axis_menu</zorder>
  </widget>
  <resources/>
  <connections/>
