@@ -321,7 +321,7 @@ class GraphWindow(QWidget):
         self.add_entry_button = QtWidgets.QPushButton('New')
         self.y_table_widget.setCellWidget(updated_row, 0, self.add_entry_button)
         self.add_entry_button.clicked.connect(lambda state, row=updated_row: self.add_entry_button_clicked(row))
-        # self.resize_y_axis_menu()
+        self.fill_y_items()
 
     def fill_y_items(self):
         self.y_items = []
