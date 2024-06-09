@@ -1,27 +1,34 @@
-from resistivity.Driver.temperature_controllers import TemperatureController
+from resistivity.Driver import temperature_controllers
 from resistivity.Driver import SR830
-from resistivity.Driver.MCLpy.MCL import MCL
+from resistivity.Driver import MCLpy
 import random
 
 class Instrument:
     """API for all the instruments"""
+    channel_dict = {} # this are class attributes, accessible without declaring the object
+    quantities = []
+
     def __init__(self, address):
         self.address = address
         pass
 
     def get_values(self, channel):
         pass
+
 
 class SynkTek(Instrument):
+    channel_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4,
+                'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
+    quantities = ["R", "theta", "X", "Y", "DC"]
+
     def __init__(self, address):
         self.address = address
-        self.mcl = MCL()
+        self.mcl = MCLpy.MCL.MCL()
         self.mcl.connect(address)
-        self.channel_labels_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4, 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
 
     def get_values(self, channel):
-        channel = channel.split("_")[0]
-        lockin = channel.split("_")[-1]
+        # channel = channel.split("_")[0]
+        lockin = "L1" #channel.split("_")[-1]
         ## Choose the right lockin
         if "L1" in lockin:
             values = self.mcl.data.L1
@@ -34,16 +41,19 @@ class SynkTek(Instrument):
         #     values = {'Freq': self.values.lock_in_frequency,
         #               'Amp': self.values.output_amplitude}
         # else:
-        values = {'DC': values.dc[self.channel_labels_dict[channel]],
-                  'X': values.x[self.channel_labels_dict[channel]],
-                  'Y': values.y[self.channel_labels_dict[channel]],
-                  'R': values.r[self.channel_labels_dict[channel]],
-                  'theta': values.theta[self.channel_labels_dict[channel]]
+        values = {'R': values.r[self.channel_dict[channel]],
+                  'theta': values.theta[self.channel_dict[channel]],
+                  'X': values.x[self.channel_dict[channel]],
+                  'Y': values.y[self.channel_dict[channel]],
+                  'DC': values.dc[self.channel_dict[channel]]
                   }
         return values
 
 
 class LockinSR830(Instrument):
+    channel_dict = {}
+    quantities = ["R", "theta", "X", "Y"]
+
     def __init__(self, address):
         self.address = address
         self.sr830 = SR830.device(address)
@@ -57,10 +67,12 @@ class LockinSR830(Instrument):
 
 
 class LakeShore350(Instrument):
+    channel_dict = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+    quantities = ["Temperature", "Power"]
+
     def __init__(self, address):
         self.address = address
-        self.ls350 = TemperatureController(ip_address=address, tcp_port=7777, timeout=1000)
-        self.channel_dict = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+        self.ls350 = temperature_controllers.TemperatureController(ip_address=address, tcp_port=7777, timeout=1000)
 
     def get_values(self, channel):
         values = {'Temperature': self.ls350.get_kelvin_reading(self.channel_dict[channel]),
@@ -69,6 +81,8 @@ class LakeShore350(Instrument):
 
 
 class RandomInt(Instrument):
+    channel_dict = {}
+    quantities = ["Rand1", "Rand2", "Rand3", "Rand4"]
     def __init__(self, address):
         self.address = address
         self.rand = random
@@ -83,18 +97,23 @@ class RandomInt(Instrument):
 
 class Constant(Instrument):
     """The address will be used a constant value to save in one column"""
+    channel_dict = {}
+    quantities = ["Value"]
+
     def __init__(self, address):
         self.address = address
-        self.values = None
 
     def get_values(self, channel):
-        values = {'value': float(self.address)}
+        values = {'Value': float(self.address)}
         return values
 
 
 class PPMS(Instrument):
+    channel_dict = {}
+    quantities = []
     def __init__(self, address):
         pass
 
     def get_values(self, channel):
         pass
+

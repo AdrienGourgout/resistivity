@@ -18,9 +18,9 @@ class LogMeasure:
         ## Dictionnary for the data
         self.data_dict = {}
         self.data_dict['Time'] = np.empty(0)
-        self.SkT = None # fake variable for SynkTek to avoid to reload it several times
         # Get the names of all the classes of instruments in this module
         self.instruments_names = [name for name, obj in inspect.getmembers(instruments) if isinstance(obj, type)]
+        self.instruments_names.remove("Instrument") # this is the API
 
     def load_config(self):
         with open(self.config_file, 'r') as f:
