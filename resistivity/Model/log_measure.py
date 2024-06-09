@@ -31,25 +31,27 @@ class LogMeasure:
             instrument  = self.config_dict["Measurements"][data_label]["instrument"]
             address   = self.config_dict["Measurements"][data_label]["address"]
             quantities = self.config_dict["Measurements"][data_label]["quantities"]
-            self.add_instrument(data_label, instrument, address, quantities)
+            self.add_instrument(instrument, address, data_label, quantities)
 
-    def add_instrument(self, data_label=None, instrument=None, address=None, quantities=None):
+    def add_instrument(self, instrument=None, address=None, data_label=None, quantities=None):
         """
-        - data_label: the label of the measured data: T0, VS, etc.
         - instrument: a string that defines the type of instrument: LockinSR830, SynkTek, etc.
         - address: a string for the address
-        - quantities: a list of strings with the channels and quantities to measure
-        for example: ["Temperature_A", "Temperature_B"] for a LakeShore350, or
-        ["A-V1_L1_X", "B-V1_L2_Y"] for a SynkTek
+        - data_label: the label of the measured data: T0, VS, etc.
+        - channel: a string "A" or "B" for a LakeShore350, or "A-V1_L1" or
+        "B-V2_L2" for a MCL SyknTek
+        - quantities: a list of the quantities to measure
+        for example: ["Temperature", "Heater"] for a LakeShore350, or
+        ["X", "Y"] for a MCL SynkTek
         """
+
         # Select the class whose name corresponds to the instrument "instrument"
         # in the module instruments
         InstrumentClass = getattr(instruments, instrument)
-        inst = InstrumentClass(address=address)
-        self.instruments_query[data_label] = inst.get_values
+        self.instruments_query[data_label] = InstrumentClass(address)
         ## Add entry to the data dictionnary
         for quantity in quantities:
-            label = data_label + '_' + quantity.split("_")[-1]
+            label = data_label + '_' + quantity
             self.data_dict[label] = np.empty(0)
 
 
@@ -64,12 +66,12 @@ class LogMeasure:
             current_time = self.data_dict['Time'][-1] + self.time_steps if self.data_dict['Time'].size else 0 # be zero for the first point
             self.data_dict['Time'] = np.append(self.data_dict['Time'], current_time)
             # Data
-            for data_label, data_function in self.instruments_query.items():
-                value = data_function(self.config_dict["Measurements"][data_label]["channel"])
-                for label in value.keys():
-                    full_label = data_label + '_' + label
+            for data_label, instrument in self.instruments_query.items():
+                values = instrument.get_values(self.config_dict["Measurements"][data_label]["channel"])
+                for quantity in values.keys():
+                    full_label = data_label + '_' + quantity
                     if full_label in self.data_dict:
-                        self.data_dict[full_label] = np.append(self.data_dict[full_label], value[label])
+                        self.data_dict[full_label] = np.append(self.data_dict[full_label], values[quantity])
             # Save log if saving is enabled
             if self.saving:
                 self.save_log()
@@ -98,6 +100,7 @@ class LogMeasure:
                 line = ','.join(map(str, values)) + '\n'
                 file.write(line)
 
+
     def start_logging(self):
         self.keep_running = True
         self.log_thread = threading.Thread(target=self.get_values)
@@ -113,7 +116,7 @@ class LogMeasure:
 
 
 if __name__ == "__main__":
-    log = LogMeasure('../Example/Config.yml')
+    log = LogMeasure('../../Example/Config.yml')
     log.load_config()
     log.load_instruments()
 

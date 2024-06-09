@@ -17,26 +17,29 @@ class SynkTek(Instrument):
         self.address = address
         self.mcl = MCL()
         self.mcl.connect(address)
-        self.values_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4, 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
+        self.channel_labels_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4, 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
 
     def get_values(self, channel):
+        channel = channel.split("_")[0]
+        lockin = channel.split("_")[-1]
         ## Choose the right lockin
-        if "L1" in channel:
+        if "L1" in lockin:
             values = self.mcl.data.L1
-        elif "L2" in channel:
+        elif "L2" in lockin:
             values = self.mcl.data.L2
         else:
             print("You defined a lockin L that does not exist")
         ## Choose the variables to save
-        if channel == 'Output':
-            values = {'Freq': self.values.lock_in_frequency,
-                      'Amp': self.values.output_amplitude}
-        else:
-            values = {'DC': values.dc[self.values_dict[channel]],
-                      'X': values.x[self.values_dict[channel]],
-                      'Y': values.y[self.values_dict[channel]],
-                      'R': values.r[self.values_dict[channel]],
-                      'theta': values.theta[self.values_dict[channel]]}
+        # if channel == 'Output':
+        #     values = {'Freq': self.values.lock_in_frequency,
+        #               'Amp': self.values.output_amplitude}
+        # else:
+        values = {'DC': values.dc[self.channel_labels_dict[channel]],
+                  'X': values.x[self.channel_labels_dict[channel]],
+                  'Y': values.y[self.channel_labels_dict[channel]],
+                  'R': values.r[self.channel_labels_dict[channel]],
+                  'theta': values.theta[self.channel_labels_dict[channel]]
+                  }
         return values
 
 

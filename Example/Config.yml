@@ -3,20 +3,22 @@ Measurements:
   # VS:
   #   instrument: SynkTek
   #   address: 172.22.11.2
-  #   quantities: ["A-V1_L1_X", "A-V1_L1_Y", "A-V1_L1_R", "A-V1_L1_theta", "A-V1_L1_DC"]
-
+  #   channel: "A-V1_L1"
+  #   quantities: ["X", "Y", "R", "theta", "DC"]
   # Voltage:
   #   instrument: SR830
   #   quantity: ["R", "theta"]
   #   address: ASRL4::INSTR
   # T0:
   #   instrument: LS350
-  #   quantity: ["Temperature_A"]
+  #   channel: "A"
+  #   quantity: ["Temperature"]
   #   timeout: 1000
   #   address: 192.168.0.12
   RR1:
-    instrument: Random
+    instrument: RandomInt
     address: None
+    channel: None
     quantities: ["Rand_1"]
 
 
