@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog, QGridLayout, QGridLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog, QGridLayout
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
@@ -26,7 +26,6 @@ class MainWindow(QMainWindow):
 
         ## Buttons
         self.start_button.clicked.connect(self.start_button_clicked)
-        self.start_button.clicked.connect(self.start_button_clicked)
         self.stop_button.clicked.connect(self.log.stop_logging)
         self.save_data_checkbox.stateChanged.connect(self.save_data)
         self.open_graph_button.clicked.connect(self.open_graph_window)
@@ -39,16 +38,6 @@ class MainWindow(QMainWindow):
         self.timer.start(50) # trigger timout every 50 ms. There is no point to do
                             # more often because the monitor won't really refresh
                             # faster than 20 Hz, maybe twice faster.
-
-    def start_button_clicked(self):
-        self.log.load_instruments()
-        self.log.start_logging()
-
-
-    def start_button_clicked(self):
-        self.log.load_instruments()
-        self.log.start_logging()
-
 
     def start_button_clicked(self):
         self.log.load_instruments()
@@ -86,57 +75,6 @@ class MainWindow(QMainWindow):
         """Override the closeEvent (when the user press on the close button)"""
         self.log.stop_logging()
 
-    ## Ramp buttons:
-    # self.open_ramp_parameters_menu.clicked.connect(self.open_ramp_parameters_menu_button_clicked)
-
-    # def open_ramp_parameters_menu_button_clicked(self):
-    #     if self.ramp_parameters_window == None:
-    #         self.ramp_parameters_window = RampParam(self.log)
-    #     self.ramp_parameters_window.show()
-
-    # def start_ramp_button_clicked(self):
-    #     data_path = {self.log.config['Saving']['data_path']: None}
-    #     self.log.data_file_dict.update(data_path)
-    #     self.log.save_data(self.log.config['Saving']['data_path'])
-    #     for start, stop, speed in zip(self.log.ramp_parameters[0], self.log.ramp_parameters[1], self.log.ramp_parameters[2]):
-    #         self.log.config['Ramp']['ramp_start_T'] = start
-    #         self.log.config['Ramp']['ramp_end_T'] = stop
-    #         self.log.config['Ramp']['ramp_speed'] = speed
-
-    #         self.log.start_ramp()
-
-class AnalysisWindow(QtWidgets.QDialog):
-    def __init__(self, parent=None, log=None):
-        super().__init__(parent)
-
-        self.layout = QtWidgets.QVBoxLayout()
-
-
-        self.label = QtWidgets.QLabel("Quantity to analyze:")
-        self.layout.addWidget(self.label)
-        self.seebeck_checkbox = QtWidgets.QCheckBox('Seebeck')
-        self.layout.addWidget(self.seebeck_checkbox)
-
-        self.validate_button = QtWidgets.QPushButton('Validate')
-        self.layout.addWidget(self.validate_button)
-
-        self.setLayout(self.layout)
-
-        self.validate_button.clicked.connect(self.validate_button_clicked)
-
-    def validate_button_clicked(self):
-
-        self.accept()
-
-class Matching(QtWidgets.QDialog):
-    def __init__(self, parent=None, log=None):
-        super().__init__(parent)
-        self.log = log
-        self.layout = QtWidgets.QVBoxLayout()
-        for names in self.log.config_dict['Measurements'].keys():
-            self.button = QtWidgets.QPushButton(names)
-            self.layout.addWidget(self.button)
-
 
 
 class GraphWindow(QWidget):
@@ -152,8 +90,6 @@ class GraphWindow(QWidget):
         self.y_axis = {}
         self.graph_data = {}
         self.graph_initial_time = 0
-        self.del_button = None
-
         self.del_button = None
 
         self.plot_items = {}  # Dictionary to hold plot items for each data series
@@ -494,9 +430,6 @@ class DevicesWindow(QWidget):
         line2 = QtWidgets.QLineEdit()
         self.table_widget.setCellWidget(row_position, 3, line2)
         # Connect signals for interaction with cell contents
-        #combo_box.currentIndexChanged.connect(lambda index, row=row_position: self.combo_box_changed(row, index))
-        #line.textChanged.connect(lambda text, row=row_position: self.line_edit_changed(row, text))
-        #checkbox.stateChanged.connect(lambda _, row=row_position: self.load_checkbox_changed(row))
         load_unload_button.clicked.connect(lambda _, row=row_position: self.load_unload_button_clicked(row))
         combo_box.currentIndexChanged.connect(lambda _, row=row_position: self.combo_box_channel_changed(row))
 
@@ -553,9 +486,6 @@ class DevicesWindow(QWidget):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
 
-    def closeEvent(self, event):
-        print('Loading Instruments')
-        self.log.load_instruments()
 
 
 
@@ -573,34 +503,27 @@ class QuantityChoiceWindow(QtWidgets.QDialog):
             self.checkboxes[quantity] = checkbox
             self.layout.addWidget(checkbox)
 
-        if instr == "Lock-in SR830":
-            self.checkboxes = {}
-            quantities = ['X', 'Y', 'R', 'Theta']
-            for quantity in quantities:
-                checkbox = QtWidgets.QCheckBox(quantity)
-                self.checkboxes[quantity] = checkbox
-                self.layout.addWidget(checkbox)
-        if instr == "Random":
-            self.checkboxes = {}
-            quantities = ['Rand_1', 'Rand_2', 'Rand_3', 'Rand_4']
-            for quantity in quantities:
-                checkbox = QtWidgets.QCheckBox(quantity)
-                self.checkboxes[quantity] = checkbox
-                self.layout.addWidget(checkbox)
-        if instr == 'SynkTek':
-            self.checkboxes = {}
-            if channel == 'Output':
-                quantities = ['Amp', 'Freq']
-                for quantity in quantities:
-                    checkbox = QtWidgets.QCheckBox(quantity)
-                    self.checkboxes[quantity] = checkbox
-                    self.layout.addWidget(checkbox)
-            else:
-                quantities = ['DC', 'X', 'Y', 'R', 'Theta']
-                for quantity in quantities:
-                    checkbox = QtWidgets.QCheckBox(quantity)
-                    self.checkboxes[quantity] = checkbox
-                    self.layout.addWidget(checkbox)
+        # if instr == 'SynkTek':
+        #     self.checkboxes = {}
+        #     if channel == 'Output':
+        #         quantities = ['Amp', 'Freq']
+        #         for quantity in quantities:
+        #             checkbox = QtWidgets.QCheckBox(quantity)
+        #             self.checkboxes[quantity] = checkbox
+        #             self.layout.addWidget(checkbox)
+        #     else:
+        #         self.label_1 = QtWidgets.QLabel("Lock-in 1")
+        #         self.layout.addWidget(self.label_1, 0, 0)
+        #         self.label_2 = QtWidgets.QLabel("Lock-in 2")
+        #         self.layout.addWidget(self.label_2, 0, 1)
+
+        #         quantities = ['DC', 'X', 'Y', 'R', 'Theta']
+        #         for j in [1,2]:
+        #             for i, quantity in enumerate(quantities):
+        #                 checkbox = QtWidgets.QCheckBox(quantity)
+        #                 label = "L" + str(j) + "_" + quantity
+        #                 self.checkboxes[label] = checkbox
+        #                 self.layout.addWidget(checkbox,i+1,j-1)
 
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.clicked.connect(self.save_config)
