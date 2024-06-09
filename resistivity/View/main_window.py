@@ -6,7 +6,7 @@ import os
 from time import time
 import numpy as np
 import yaml
-import resistivity.Model.Instruments_reading as instruments
+import resistivity.Device.instruments as instruments
 
 class MainWindow(QMainWindow):
     def __init__(self, log=None):

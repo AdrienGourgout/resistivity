@@ -1,6 +1,6 @@
-from resistivity.Driver import temperature_controllers
-from resistivity.Driver import SR830
-from resistivity.Driver import MCLpy
+from resistivity.Device import temperature_controllers
+from resistivity.Device import SR830
+from resistivity.Device import MCLpy
 import random
 
 class Instrument:

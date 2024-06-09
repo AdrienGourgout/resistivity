@@ -1,4 +1,4 @@
-from resistivity.Driver.MCLpy.ReadWriteValues import ReadOnlyParameter, ReadWriteParameter
+from resistivity.Device.MCLpy.ReadWriteValues import ReadOnlyParameter, ReadWriteParameter
 import struct
 from collections import namedtuple
 

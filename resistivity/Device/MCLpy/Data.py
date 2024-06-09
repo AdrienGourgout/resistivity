@@ -1,5 +1,5 @@
-from resistivity.Driver.MCLpy.DataClasses import *
-from resistivity.Driver.MCLpy.ReadWriteValues import *
+from resistivity.Device.MCLpy.DataClasses import *
+from resistivity.Device.MCLpy.ReadWriteValues import *
 
 __all__ = ['Data']
 

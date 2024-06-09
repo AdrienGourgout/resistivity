@@ -6,8 +6,8 @@ import sys
 import threading
 import time
 
-from resistivity.Driver.MCLpy.Config import Config
-from resistivity.Driver.MCLpy.Data import Data
+from resistivity.Device.MCLpy.Config import Config
+from resistivity.Device.MCLpy.Data import Data
 
 __all__ = ['MCL']
 

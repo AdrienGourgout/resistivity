@@ -1,5 +1,5 @@
 from time import sleep
-import resistivity.Model.Instruments_reading as instruments
+import resistivity.Device.instruments as instruments
 import numpy as np
 import threading
 import os
