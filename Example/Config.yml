@@ -1,81 +1,31 @@
 User: Adrien
 Measurements:
-  # V_S:
-  #   address: 172.22.11.2
-  #   channel: A-V1
+  # VS:
   #   instrument: SynkTek
-  #   quantities:
-  #     X:
-  #     Y:
-  #     R:
-  #     theta:
-  #     DC:
-  # XX:
+  #   address: 172.22.11.2
+  #   channel: "A-V1_L1"
+  #   quantities: ["X", "Y", "R", "theta", "DC"]
+  # Voltage:
   #   instrument: SR830
-  #   quantity: X
-  #   port: ASRL4::INSTR
-  # YY:
-  #   instrument: SR830
-  #   quantity: Y
+  #   quantity: ["R", "theta"]
   #   address: ASRL4::INSTR
   # T0:
   #   instrument: LS350
-  #   quantity: Temperature
+  #   channel: "A"
+  #   quantity: ["Temperature"]
   #   timeout: 1000
-  #   address: '192.168.0.12'
-  #   tcp_port: 7777
-  # RR1:
-  #   instrument: Random
-  #   channel: Random_1
-  #   address: None
-  #   quantities:
-  #     Rand1:
-  # RR2:
-  #   instrument: Random
-  #   channel: Random_2
-  #   address: None
-  #   quantities:
-  #     Rand1:
-  # T+:
-  #   address: 172.22.11.2
-  #   channel: B-V1
-  #   instrument: SynkTek
-  #   quantities:
-  #     X:
-  #     Y:
-  #     R:
-  #     theta:
-  #     DC:
-  # T-:
-  #   address: 172.22.11.2
-  #   channel: B-V2
-  #   instrument: SynkTek
-  #   quantities:
-  #     X:
-  #     Y:
-  #     R:
-  #     theta:
-  #     DC:
+  #   address: 192.168.0.12
   RR1:
+    instrument: RandomInt
     address: None
-    channel: '1'
-    instrument: Random
-    quantities:
-      Rand_1: true
-  RR2:
-    address: None
-    channel: '2'
-    instrument: Random
-    quantities:
-      Rand_2: true
+    channel: None
+    quantities: ["Rand_1"]
 
 
 # Saving info:
 Saving:
   path: null
   file: file.dat
-
-
 
 # Analysis info:
 Analysis:
