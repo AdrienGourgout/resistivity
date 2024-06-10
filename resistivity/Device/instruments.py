@@ -1,6 +1,7 @@
 from resistivity.Device import temperature_controllers
 from resistivity.Device import SR830
 from resistivity.Device import MCLpy
+import MultiPyVu as mpv
 import random
 
 class Instrument:
@@ -110,10 +111,17 @@ class Constant(Instrument):
 
 class PPMS(Instrument):
     channel_dict = {}
-    quantities = []
+    quantities = ['Temperature','Field']
     def __init__(self, address):
-        pass
+        self.ppms_server = mpv.Server(address)
+        self.ppms_client = mpv.Client(address)
 
     def get_values(self, channel):
+        temperature, status = self.ppms_client.get_temperature()
+        field, status = self.ppms_client.get_field()
+        values = {'Temperature': temperature,
+                  'Field': field}
+        return values
+        
         pass
 
