@@ -3,8 +3,8 @@ Measurements:
   # VS:
   #   instrument: SynkTek
   #   address: 172.22.11.2
-  #   channel: "A-V1_L1"
-  #   quantities: ["X", "Y", "R", "theta", "DC"]
+  #   channel: "A-V1"
+  #   quantities: ["R", "theta", "DC"]
   # Voltage:
   #   instrument: SR830
   #   quantity: ["R", "theta"]
@@ -19,7 +19,7 @@ Measurements:
     instrument: RandomInt
     address: None
     channel: None
-    quantities: ["Rand_1"]
+    quantities: ["Rand1"]
 
 
 # Saving info:

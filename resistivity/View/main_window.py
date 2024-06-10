@@ -38,9 +38,9 @@ class MainWindow(QMainWindow):
         self.timer.start(50) # trigger timout every 50 ms. There is no point to do
                             # more often because the monitor won't really refresh
                             # faster than 20 Hz, maybe twice faster.
+        self.log.load_instruments()
 
     def start_button_clicked(self):
-        self.log.load_instruments()
         self.log.start_logging()
 
 
@@ -98,13 +98,10 @@ class GraphWindow(QWidget):
         self.init_plot()
 
         # Create a Table Widget in the y_axis_menu
-
         y_layout = self.y_axis_menu.layout()
-
         self.y_table_widget = QtWidgets.QTableWidget()
         self.y_table_widget.setColumnCount(4)
         self.y_axis_menu.setMinimumSize(400, 300)
-        # self.y_table_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         y_layout.addWidget(self.y_table_widget)
         # Hide the numbers of rows/columns
         self.y_table_widget.verticalHeader().setVisible(False)
@@ -117,11 +114,11 @@ class GraphWindow(QWidget):
 
         self.add_entry_button = QtWidgets.QPushButton('New')
         self.y_table_widget.setCellWidget(row_position, 0, self.add_entry_button)
-        self.add_entry_button.clicked.connect(lambda state, row=row_position: self.add_entry_button_clicked(row))
+        self.add_entry_button.clicked.connect(lambda _, row=row_position: self.add_entry_button_clicked(row))
 
 
         # Initialize the list for y-axis
-        for key, value in self.log.data_dict.items():
+        for key in self.log.data_dict.keys():
             self.graph_data[key] = np.empty(0)
             self.x_axis_menu.addItem(f'{key}')
             # item = QListWidgetItem(f'{key}')
@@ -284,15 +281,14 @@ class GraphWindow(QWidget):
                 self.assigned_colors[y_item] = color
             else:
                 color = self.assigned_colors[y_item]
-
          # Update the QFrame color
             self.y_table_widget.cellWidget(row, 2).setStyleSheet(f"background-color: {color};")
         else:
             # If unchecked, reset the QFrame color
             self.y_table_widget.cellWidget(row, 2).setStyleSheet("background-color: none;")
-
         # Update the plot items
         self.fill_y_items()
+
     def x_axis_menu_index_changed(self):
         self.x_item = self.x_axis_menu.currentText()
         self.plot_widget.setLabel('bottom',self.x_axis_menu.currentText())
@@ -486,6 +482,8 @@ class DevicesWindow(QWidget):
         # Delete the row on pressing Unload button
         self.table_widget.removeRow(row)
 
+    def closeEvent(self, event):
+        self.log.load_instruments()
 
 
 
