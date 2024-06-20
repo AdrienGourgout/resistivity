@@ -1,8 +1,9 @@
 from resistivity.Device import temperature_controllers
 from resistivity.Device import SR830
-from resistivity.Device import MCLpy
+from .MCLpy.MCL import MCL
 import MultiPyVu as mpv
 import random
+
 
 class Instrument:
     """API for all the instruments"""
@@ -21,11 +22,15 @@ class SynkTek(Instrument):
     channel_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4,
                 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
     quantities = ["R", "theta", "X", "Y", "DC"]
+    _is_first_instance = True
+    mcl = MCL()
 
     def __init__(self, address):
         self.address = address
-        self.mcl = MCLpy.MCL.MCL()
-        self.mcl.connect(address)
+        if SynkTek._is_first_instance:
+            print(SynkTek._is_first_instance)
+            self.mcl.connect(address)
+            SynkTek._is_first_instance = False
 
     def get_values(self, channel):
         # channel = channel.split("_")[0]
@@ -113,8 +118,14 @@ class PPMS(Instrument):
     channel_dict = {}
     quantities = ['Temperature','Field']
     def __init__(self, address):
-        self.ppms_server = mpv.Server(address)
-        self.ppms_client = mpv.Client(address)
+        """
+        The port the works on the ESPCI PPMS is port = 6000
+        """
+        address = int(address)
+        self.ppms_server = mpv.Server(port=address)
+        self.ppms_client = mpv.Client(port=address)
+        self.ppms_server.open()
+        self.ppms_client.open()
 
     def get_values(self, channel):
         temperature, status = self.ppms_client.get_temperature()
@@ -122,6 +133,12 @@ class PPMS(Instrument):
         values = {'Temperature': temperature,
                   'Field': field}
         return values
-        
-        pass
+
+if __name__ == "__main__":
+
+    from time import sleep
+    test = PPMS(6000)
+    for _ in range(5):
+        sleep(0.5)
+        print(test.get_values(''))
 

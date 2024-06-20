@@ -438,7 +438,7 @@ class DevicesWindow(QWidget):
         if self.table_widget.cellWidget(row, 4).text() == 'Load':
             self.open_quantity_window(instrument_name, channel)
             #self.log.add_instrument(instrument, address, quantity, name)
-            quantities = self.chosen_quantities
+            quantities = list(self.chosen_quantities.keys())
             self.log.config_dict['Measurements'][data_label] = {}
             self.log.config_dict["Measurements"][data_label]["instrument"] = instrument_name
             self.log.config_dict["Measurements"][data_label]["address"] = address
@@ -555,9 +555,9 @@ class FileWindow(QtWidgets.QDialog):
 
     def select_file_button_clicked(self):
         log_file_path, _ = QFileDialog.getSaveFileName(self, "Select a file", "", "DAT Files (*.dat)")
-        example_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'Example')
-        total_path = os.path.relpath(log_file_path,example_path)
-        log_path, log_file = os.path.split(total_path)
+        #example_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'Example')
+        #total_path = os.path.relpath(log_file_path,example_path)
+        log_path, log_file = os.path.split(log_file_path)
         self.saving_file_line.setText(log_file_path)
         self.log.config_dict['Saving']['file'] = log_file
         self.log.config_dict["Saving"]['path'] = log_path
