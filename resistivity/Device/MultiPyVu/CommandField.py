@@ -58,7 +58,7 @@ class CommandFieldBase(ICommand):
         self.instrument_name = instrument_name
 
         # Field state code dictionary
-        self.__state_dictionary = {
+        self._state_dictionary = {
             1: 'Stable',
             2: 'Switch Warming',
             3: 'Switch Cooling',
@@ -131,7 +131,10 @@ class CommandFieldBase(ICommand):
         return f'{set_point},{rate_per_sec},{approach.value},{mode}'
 
     def convert_state_dictionary(self, status_number):
-        return self.__state_dictionary[status_number]
+        if isinstance(status_number, str):
+            return status_number
+        else:
+            return self._state_dictionary[status_number]
 
     @abstractmethod
     def get_state_server(self, value_variant, state_variant, params=''):
@@ -193,7 +196,7 @@ class CommandFieldBase(ICommand):
         return error
 
     def state_code_dict(self):
-        return self.__state_dictionary
+        return self._state_dictionary
 
 
 ############################
@@ -240,14 +243,20 @@ class CommandFieldImp(CommandFieldBase):
                              set_driven: int
                              ) -> Union[str, int]:
         try:
-            error = self._mvu.setField(field,
+            can_error = self._mvu.setField(field,
                                        set_rate_per_sec,
                                        set_approach,
                                        set_driven
                                        )
-            if error > 0:
+            if self.instrument_name == 'PPMS':
+                if can_error > 1:
+                   raise MultiPyVuError('Error when calling SetField()')
+                else:
+                     # returning this string makes CommandMultiVu_base happy
+                    return 'Call was successful'
+            elif can_error > 0:
                 raise MultiPyVuError('Error when calling SetField()')
-            return error
+            return can_error
         except AttributeError:
             # this will raise a pywin_com_error if it is bad
             return str(self._mvu)

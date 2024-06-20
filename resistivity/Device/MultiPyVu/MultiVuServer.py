@@ -45,6 +45,14 @@ def catch_thread_error(func):
     def error_handler(*args, **kwargs):
         try:
             func(*args, **kwargs)
+        # ignore the errors handled in _exit()
+        except (
+            KeyboardInterrupt,
+            MultiPyVuError,
+            UserWarning,
+            ClientCloseError
+                ) as e:
+            raise e
         except BaseException:
             name = threading.current_thread().name
             msg = f'Exception in thread \'{name}\' '
@@ -188,8 +196,8 @@ class Server(Subject):
     def __enter__(self):
         try:
             sel = self.config_sock()
-        except OSError as e:
-            # invalide connection, so return None
+        except OSError:
+            # invalid connection, so return None
             return None
         quit_keys = "ctrl-c"
         if sys.platform == 'win32':

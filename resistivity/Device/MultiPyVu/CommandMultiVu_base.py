@@ -67,7 +67,7 @@ class CommandMultiVuBase():
         result_string = result if type(result) == str else f'{result:.4f}'
         return f'{result_string},{mv_command.units},{code_in_words}'
 
-    def set_state(self, command, arg_string) -> str:
+    def set_state(self, command, arg_string):
         '''
         Sets the state for a given command using the arg_string for parameters
 
@@ -81,10 +81,6 @@ class CommandMultiVuBase():
                 TEMP: set point, rate, mode
                 FIELD: set point, rate, approach, and magnetic state.
                 CHAMBER: mode
-
-        Returns:
-        --------
-        str:  Error message
 
         Raises
         ------
@@ -105,7 +101,7 @@ class CommandMultiVuBase():
                     msg = f'Error when setting the {command} {arg_string}: '
                     msg += f'error = {err}'
                     raise MultiPyVuError(msg)
-                
+
             if isinstance(err, str):
                 can_error_msg = mv_command.convert_state_dictionary(err)
                 if can_error_msg == 'Call was successful':

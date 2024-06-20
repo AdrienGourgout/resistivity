@@ -48,7 +48,7 @@ class CommandChamberBase(ICommand):
         self.instrument_name = instrument_name
 
         # State code dictionary
-        self.__state_dictionary = {
+        self._state_dictionary = {
             0: 'Unknown',
             1: 'Purged and Sealed',
             2: 'Vented and Sealed',
@@ -71,22 +71,22 @@ class CommandChamberBase(ICommand):
                              mode_setting: IntEnum,
                              mode_readback):
         if mode_setting == self.mode.seal:
-            returnTrue = [self.__state_dictionary[1],
-                          self.__state_dictionary[2],
-                          self.__state_dictionary[3],
+            returnTrue = [self._state_dictionary[1],
+                          self._state_dictionary[2],
+                          self._state_dictionary[3],
                           ]
             if mode_readback in returnTrue:
                 return True
         elif mode_setting == self.mode.purge_seal:
-            return (mode_readback == self.__state_dictionary[1])
+            return (mode_readback == self._state_dictionary[1])
         elif mode_setting == self.mode.vent_seal:
-            return (mode_readback == self.__state_dictionary[2])
+            return (mode_readback == self._state_dictionary[2])
         elif mode_setting == self.mode.pump_continuous:
-            return (mode_readback == self.__state_dictionary[8])
+            return (mode_readback == self._state_dictionary[8])
         elif mode_setting == self.mode.vent_continuous:
-            return (mode_readback == self.__state_dictionary[9])
+            return (mode_readback == self._state_dictionary[9])
         elif mode_setting == self.mode.high_vacuum:
-            return (mode_readback == self.__state_dictionary[7])
+            return (mode_readback == self._state_dictionary[7])
 
     def convert_result(self, response: Dict) -> Tuple:
         '''
@@ -121,7 +121,10 @@ class CommandChamberBase(ICommand):
         return f'{mode_as_int}'
 
     def convert_state_dictionary(self, status_number):
-        return self.__state_dictionary[status_number]
+        if isinstance(status_number, str):
+            return status_number
+        else:
+            return self._state_dictionary[status_number]
 
     @abstractmethod
     def get_state_server(self, value_variant, state_variant,  params=''):
@@ -148,7 +151,7 @@ class CommandChamberBase(ICommand):
         return self.set_state_server_imp(set_mode)
 
     def state_code_dict(self):
-        return self.__state_dictionary
+        return self._state_dictionary
 
 
 ############################
@@ -181,10 +184,16 @@ class CommandChamberImp(CommandChamberBase):
         return '', return_state
 
     def set_state_server_imp(self, mode: int) -> Union[str, int]:
-        error = self._mvu.SetChamber(mode)
-        if error > 0:
+        can_error = self._mvu.SetChamber(mode)
+        if self.instrument_name == 'PPMS':
+            if can_error > 1:
+                raise MultiPyVuError('Error when calling SetChamber()')
+            else:
+                # returning this string makes CommandMultiVu_base happy
+                return 'Call was successful'
+        elif can_error > 0:
             raise MultiPyVuError('Error when calling SetChamber()')
-        return error
+        return can_error
 
 
 ############################

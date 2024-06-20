@@ -44,7 +44,7 @@ class CommandTemperatureBase(ICommand):
         super().__init__()
 
         # Temperature state code dictionary
-        self.__state_dictionary = {
+        self._state_dictionary = {
             1: "Stable",
             2: "Tracking",
             5: "Near",
@@ -108,10 +108,13 @@ class CommandTemperatureBase(ICommand):
         return f'{set_point},{rate_per_minute},{approach_mode.value}'
 
     def convert_state_dictionary(self, status_number):
-        return self.__state_dictionary[status_number]
+        if isinstance(status_number, str):
+            return status_number
+        else:
+            return self._state_dictionary[status_number]
 
     def state_code_dict(self):
-        return self.__state_dictionary
+        return self._state_dictionary
 
     @abstractmethod
     def get_state_server(self, arg_string: str) -> Union[str, int]:
@@ -160,18 +163,20 @@ class CommandTemperatureBase(ICommand):
 ############################
 
 class CommandTemperatureImp(CommandTemperatureBase):
-    def __init__(self, multivu_win32com):
+    def __init__(self, multivu_win32com, instrument_name):
         '''
         Parameters:
         ----------
         multivu_win32com: Union[win32.dynamic.CDispatch, None]
+        mvu_flavor: str
         '''
         super().__init__()
         self._mvu = multivu_win32com
+        self.instrument_name = instrument_name
 
     def get_state_server(self, value_variant, state_variant, params=''):
-        error = self._mvu.GetTemperature(value_variant, state_variant)
-        if error > 0:
+        can_error = self._mvu.GetTemperature(value_variant, state_variant)
+        if can_error > 0:
             raise MultiPyVuError('Error when calling GetTemperature()')
         temperature = value_variant.value
         return_state = int(state_variant.value)
@@ -184,15 +189,21 @@ class CommandTemperatureImp(CommandTemperatureBase):
                        set_approach: int
                        ) -> Union[str, int]:
         try:
-            error = self._mvu.SetTemperature(temperature,
+            can_error = self._mvu.SetTemperature(temperature,
                                              set_rate_per_min,
                                              set_approach)
         except pywin_com_error:
             raise MultiPyVuError('No pywin32 connection to MultiVu.  Is MultiVu running?')
         else:
-            if error > 0:
+            if self.instrument_name == 'PPMS':
+                if can_error > 1:
+                    raise MultiPyVuError('Error when calling SetTemperature()')
+                else:
+                    # returning this string makes CommandMultiVu_base happy
+                    return 'Call was successful'
+            elif can_error > 0:
                 raise MultiPyVuError('Error when calling SetTemperature()')
-        return error
+        return can_error
 
 
 ############################

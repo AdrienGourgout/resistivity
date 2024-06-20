@@ -30,7 +30,7 @@ def create_command_mv(mvu_flavor, win32_dispatch=None):
     A CommandMultiVu object.  If win32_dispatch is None, it returns
     a simulated object.
     '''
-    cmd_dict = {'TEMP': create_command_temp(win32_dispatch),
+    cmd_dict = {'TEMP': create_command_temp(win32_dispatch, mvu_flavor),
                 'FIELD': create_command_field(win32_dispatch, mvu_flavor),
                 'CHAMBER': create_command_chamber(win32_dispatch, mvu_flavor),
                 'SDO': create_command_sdo(win32_dispatch),
@@ -42,7 +42,8 @@ def create_command_mv(mvu_flavor, win32_dispatch=None):
 
 
 def create_command_temp(
-        win32_dispatch=None
+        win32_dispatch=None,
+        mvu_flavor=''
         ) -> Union[temperature.CommandTemperatureSim,
                    temperature.CommandTemperatureImp]:
     '''
@@ -61,7 +62,7 @@ def create_command_temp(
     if win32_dispatch is None:
         return temperature.CommandTemperatureSim()
     else:
-        return temperature.CommandTemperatureImp(win32_dispatch)
+        return temperature.CommandTemperatureImp(win32_dispatch, mvu_flavor)
 
 
 def create_command_field(

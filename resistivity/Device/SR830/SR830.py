@@ -57,7 +57,7 @@ class device:
                 24 : "200mV",
                 25 : "500mV",
                 26 : "1V"}
-            
+
     def reset(self):
         self.device.write('*RST')
     def clear(self):
@@ -74,13 +74,13 @@ class device:
         self.device.write('ARSV')
     def auto_offset(self,channel):
         self.device.write('AOFF %i' % channel )
-        
-        
+
+
     #get settings
     def get_tau(self):
-        return self.device.query('OFLT?')   
+        return self.device.query('OFLT?')
     def get_sens(self):
-        return self.device.query('SENS?')   
+        return self.device.query('SENS?')
     def get_trigsource(self):
         return self.device.query('FMOD?')
     def get_trigshape(self):
@@ -108,7 +108,7 @@ class device:
 
 
 
-    #set settings        
+    #set settings
     def set_freq(self,freq):
         self.device.write('FREQ %f' % freq )
     def set_ampl(self,ampl):
@@ -118,15 +118,15 @@ class device:
     def set_tau(self,tau):
         self.device.write('OFLT %i' % tau)
     def set_sens(self,sens):
-        self.device.write('SENS %i' % sens)    
+        self.device.write('SENS %i' % sens)
     def set_phase(self,phase):
-        self.device.write('PHAS %f' % phase)       
+        self.device.write('PHAS %f' % phase)
     def set_aux(self,output,value):
         self.device.write('AUXV %(out)i, %(val).3f' % {'out':output,'val':value})
     def set_trigsource(self,ref):
         self.device.write('FMOD %e' % ref)
     def set_trigshape(self, trigshape):
-        self.device.write('RSLP %i' % trigshape)        
+        self.device.write('RSLP %i' % trigshape)
     def set_disp_rat(self,channel,disp,ratio):
         self.device.write('DDEF %(channel)i, %(disp)i, %(ratio)i'  % {'channel':channel,'disp':disp, 'ratio':ratio})
     def set_exp_off(self,channel,offset,expand):
@@ -144,11 +144,11 @@ class device:
     def set_slope(self,slope):
         self.device.write('OFSL %i' % slope)
     def set_sync(self,sync):
-        self.device.write('SYNC %i' % sync)      
-        
-        
-        
-    #get data    
+        self.device.write('SYNC %i' % sync)
+
+
+
+    #get data
     def get_all(self):
         return self.device.query("SNAP?1,2,3,4")
     def get_X(self):
@@ -160,9 +160,9 @@ class device:
     def get_Theta(self):
         return float(self.device.query('OUTP? 4'))
     def get_freq(self):
-        return float(self.device.query('FREQ?'))   
+        return float(self.device.query('FREQ?'))
     def get_ampl(self):
-        return float(self.device.query('SLVL?'))        
+        return float(self.device.query('SLVL?'))
     def get_phase(self):
         return float(self.device.query('PHAS?'))
     def get_harm(self):
@@ -172,10 +172,10 @@ class device:
     def read_aux(self,output):
         return float(self.device.query('AUXV? %i' %output))
 
-        
-        
- 
-              
+
+
+
+
 if (__name__ == '__main__'):
     add="GPIB0::14"
     lockin=device(add)

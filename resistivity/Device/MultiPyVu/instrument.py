@@ -14,6 +14,7 @@ import time
 import re
 import logging
 from enum import Enum, auto
+from typing import Tuple
 
 from .Command_factory import create_command_mv
 from .project_vars import SERVER_NAME, PYWIN32_VERSION, MIN_PYWIN32_VERSION
@@ -108,14 +109,14 @@ class Instrument():
         self.multi_vu = None
         self._connect_to_MultiVu(self.name)
 
-    def _get_exe(self, inst: str) -> str:
+    def _exe_to_common_name(self, exe_name: str) -> str:
         '''
-        Returns the name of the MultiVu exe.
+        Returns the common name of the MultiVu flavor.
 
         Parameters
         ----------
-        inst : str
-            The name of the MultiVu flavor.
+        exe_name : str
+            The name of the MultiVu flavor executable.
 
         Returns
         -------
@@ -123,17 +124,18 @@ class Instrument():
             A string of the specific MultiVu flavor .exe
 
         '''
-        if inst.upper() == InstrumentList.PPMS.name:
-            name = inst.capitalize() + 'Mvu'
-        elif inst.upper() == InstrumentList.MPMS3.name:
-            name = 'SquidVsm'
-        elif inst.upper() == InstrumentList.VERSALAB.name:
-            name = 'VersaLab'
-        elif inst.upper() == InstrumentList.OPTICOOL.name:
-            name = 'OptiCool'
+        if exe_name.capitalize() == 'PpmsMvu.exe'.capitalize():
+            name = InstrumentList.PPMS.name
+        elif exe_name.capitalize() == 'SquidVsm.exe'.capitalize():
+            name = InstrumentList.MPMS3.name
+        elif exe_name.capitalize() == 'VersaLab.exe'.capitalize():
+            name = InstrumentList.VERSALAB.name
+        elif exe_name.capitalize() == 'OptiCool.exe'.capitalize():
+            name = InstrumentList.OPTICOOL.name
+        elif exe_name.capitalize() == 'DynaCool.exe'.capitalize():
+            name = InstrumentList.DYNACOOL.name
         else:
-            name = inst.capitalize()
-        name += '.exe'
+            raise ValueError(f'{exe_name} is not a recognized executable name')
         return name
 
     def _get_class_id(self, inst: str) -> str:
@@ -179,29 +181,28 @@ class Instrument():
                 err_msg += 'the MultiVu flavor.'
                 raise MultiPyVuError(err_msg)
 
-            detected_name = self.detect_multivu()
-            if detected_name != instrument_name:
+            self.name, self.exe_name = self.detect_multivu()
+            if self.name != instrument_name:
                 if instrument_name == '':
-                    msg = f'Found {detected_name} running.'
+                    msg = f'Found {self.name} running.'
                     self.logger.info(msg)
                     msg = f'MultiPyVu Version: {mpv_version}'
                     self.logger.debug(msg)
                 else:
                     msg = f'User specified {instrument_name}, but detected '
-                    msg += f'{detected_name} running. Either leave out a '
+                    msg += f'{self.name} running. Either leave out a '
                     msg += 'specific MultiVu flavor and use the detected '
                     msg += 'one, or have the specified flavor match the '
                     msg += 'running instance.'
                     raise ValueError(msg)
-            self.name = detected_name
-            self.exe_name = self._get_exe(self.name)
             self.class_id = self._get_class_id(self.name)
             self.initialize_multivu_win32com()
 
-    def detect_multivu(self) -> str:
+    def detect_multivu(self) -> Tuple[str, str]:
         '''
         This looks in the file system for a running version of
-        MultiVu.  Once it is found, the function returns the name.
+        MultiVu.  Once it is found, the function returns the a
+        tuple with the common name and the executable name.
 
         Raises
         ------
@@ -211,14 +212,18 @@ class Instrument():
 
         Returns
         -------
-        string
-            Returns the common name of the QD instrument.
+        tuple[str]
+            Returns the (common name, executable name) of the QD instrument.
 
         '''
         # Build a list of enum, instrumentType
         instrument_names = list(InstrumentList)
         # Remove the last item (called na)
         instrument_names.pop()
+
+        # declare these variables so that they are available to return
+        common_name = ''
+        exe_name = ''
 
         # Use WMIC to get the list of running programs with 'multivu'
         # in their path
@@ -235,15 +240,9 @@ class Instrument():
             exe_found = re.findall(exe_search, i)
             if len(exe_found) > 0:
                 name, location, process_id = exe_found[0]
-                open_mv_dict[name] = (location, process_id)
-
-        # Attempt to match the expected MV executable names with
-        # the programs in the list and instantiate the instrument
-        # and add to MultiVu_list.
-        # MultiVu_list = []
-        # for instr in instrument_names:
-        #     if instr.name in proc.stdout.upper():
-        #         MultiVu_list.append(instr.name)
+                exe_name = name + '.exe'
+                common_name = self._exe_to_common_name(exe_name)
+                open_mv_dict[common_name] = (location, process_id)
 
         # Declare errors if to few or too many are found; for one found,
         # declare which version is identified
@@ -268,8 +267,7 @@ class Instrument():
                 self.logger.info(msg)
             else:
                 self.logger.debug(msg)
-        self.name = name.upper()
-        return self.name
+        return common_name, exe_name
 
     def initialize_multivu_win32com(self):
         '''

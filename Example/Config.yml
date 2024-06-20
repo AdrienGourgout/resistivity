@@ -1,10 +1,10 @@
-User: Adrien
+User: Etienne
 Measurements:
-  VS:
-    instrument: SynkTek
-    address: 172.22.11.2
-    channel: "A-V1"
-    quantities: ["R", "theta", "DC"]
+  # VS:
+  #   instrument: SynkTek
+  #   address: 172.22.11.2
+  #   channel: "A-V1"
+  #   quantities: ["R", "theta", "DC"]
   # Voltage:
   #   instrument: SR830
   #   quantity: ["R", "theta"]

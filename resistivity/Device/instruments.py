@@ -1,10 +1,3 @@
-from resistivity.Device import temperature_controllers
-from resistivity.Device import SR830
-from .MCLpy.MCL import MCL
-import MultiPyVu as mpv
-import random
-
-
 class Instrument:
     """API for all the instruments"""
     channel_dict = {} # this are class attributes, accessible without declaring the object
@@ -17,20 +10,31 @@ class Instrument:
     def get_values(self, channel):
         pass
 
+    def initialize(self):
+        pass
+
+    def finalize(self):
+        pass
+
 
 class SynkTek(Instrument):
     channel_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4,
                 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
     quantities = ["R", "theta", "X", "Y", "DC"]
     _is_first_instance = True
+    from .MCLpy.MCL import MCL
     mcl = MCL()
 
     def __init__(self, address):
         self.address = address
         if SynkTek._is_first_instance:
-            print(SynkTek._is_first_instance)
-            self.mcl.connect(address)
             SynkTek._is_first_instance = False
+
+    def initialize(self):
+        self.mcl.connect(self.address)
+
+    def finalize(self):
+        self.mcl.disconnect()
 
     def get_values(self, channel):
         # channel = channel.split("_")[0]
@@ -62,7 +66,15 @@ class LockinSR830(Instrument):
 
     def __init__(self, address):
         self.address = address
-        self.sr830 = SR830.device(address)
+        self.sr830 = None
+
+    def initialize(self):
+        from .SR830 import SR830
+        self.sr830 = SR830.device(self.address)
+
+    def finalize(self):
+        self.sr830.rm.close()
+        self.sr830 = None
 
     def get_values(self, channel):
         values = {'X': self.sr830.get_X,
@@ -78,7 +90,15 @@ class LakeShore350(Instrument):
 
     def __init__(self, address):
         self.address = address
-        self.ls350 = temperature_controllers.TemperatureController(ip_address=address, tcp_port=7777, timeout=1000)
+        self.ls350 = None
+
+    def initialize(self):
+        from .LakeShore350 import temperature_controllers
+        self.ls350 = temperature_controllers.TemperatureController(ip_address=self.address, tcp_port=7777, timeout=1000)
+
+    def finalize(self):
+        del self.ls350 # that shuts down the communication
+        self.ls350 = None
 
     def get_values(self, channel):
         values = {'Temperature': self.ls350.get_kelvin_reading(self.channel_dict[channel]),
@@ -90,6 +110,7 @@ class RandomInt(Instrument):
     channel_dict = {}
     quantities = ["Rand1", "Rand2", "Rand3", "Rand4"]
     def __init__(self, address):
+        import random
         self.address = address
         self.rand = random
 
@@ -117,15 +138,36 @@ class Constant(Instrument):
 class PPMS(Instrument):
     channel_dict = {}
     quantities = ['Temperature','Field']
+
+    _is_first_instance = True
+
+    import platform
+    if platform.system() == 'Windows':
+        from .MultiPyVu import Server, Client
+        ppms_server = Server(port=6000)
+        ppms_client = Client(port=6000)
+
+    def __init__(self, address):
+        self.address = int(address)
+        if self.address != 6000:
+            print("The port needs to be 6000 at ESPCI")
+            self.ppms_server.port = address
+        if PPMS._is_first_instance:
+            PPMS._is_first_instance = False
+
     def __init__(self, address):
         """
         The port the works on the ESPCI PPMS is port = 6000
         """
-        address = int(address)
-        self.ppms_server = mpv.Server(port=address)
-        self.ppms_client = mpv.Client(port=address)
+        self.address = int(address)
+
+    def initialize(self):
         self.ppms_server.open()
         self.ppms_client.open()
+
+    def finalize(self):
+        self.ppms_server.close()
+        self.ppms_client.close()
 
     def get_values(self, channel):
         temperature, status = self.ppms_client.get_temperature()
@@ -134,11 +176,5 @@ class PPMS(Instrument):
                   'Field': field}
         return values
 
-if __name__ == "__main__":
 
-    from time import sleep
-    test = PPMS(6000)
-    for _ in range(5):
-        sleep(0.5)
-        print(test.get_values(''))
 

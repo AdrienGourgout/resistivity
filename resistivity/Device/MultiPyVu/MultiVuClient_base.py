@@ -31,6 +31,7 @@ from .exceptions import (MultiPyVuError,
                          ServerCloseError,
                          SocketError
                          )
+from .__version import __version__ as mpv_version
 
 if sys.platform == 'win32':
     import msvcrt    # Used to help detect the esc-key
@@ -88,6 +89,7 @@ class ClientBase():
         self.logger.info(response['result'])
         self._instr = self._message.instr
         self.instrument_name = self._message.instr.name
+        self.logger.debug(f'MultiPyVu Version: {mpv_version}')
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> bool:
