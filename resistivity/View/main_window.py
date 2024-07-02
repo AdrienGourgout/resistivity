@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QListWidget, QListWidgetItem, QFileDialog, QDialog, QGridLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QFileDialog, QColorDialog
 from PyQt5 import uic, QtWidgets
+from PyQt5.QtGui import QColor, QPainter
 from PyQt5.QtCore import QTimer, Qt
 import pyqtgraph as pg
 import os
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow):
 
         ## Buttons
         self.start_button.clicked.connect(self.start_button_clicked)
-        self.stop_button.clicked.connect(self.log.stop_logging)
+        self.stop_button.clicked.connect(self.stop_button_clicked)
         self.save_data_checkbox.stateChanged.connect(self.save_data)
         self.open_graph_button.clicked.connect(self.open_graph_window)
         self.open_devices_button.clicked.connect(self.open_devices_window)
@@ -41,12 +42,14 @@ class MainWindow(QMainWindow):
         self.log.load_instruments()
 
     def start_button_clicked(self):
+        self.log.initialize_instruments()
         self.log.start_logging()
 
+    def stop_button_clicked(self):
+        self.log.stop_logging()
+        self.log.finalize_instruments()
 
     def open_graph_window(self):
-        # if self.log.keep_running == False:
-        #     self.log.start_logging()
         self.window_graph_list.append(GraphWindow(self.log))
         self.window_graph_list[-1].show()
 
@@ -74,6 +77,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Override the closeEvent (when the user press on the close button)"""
         self.log.stop_logging()
+        self.log.finalize_instruments()
 
 
 
@@ -99,9 +103,13 @@ class GraphWindow(QWidget):
 
         # Create a Table Widget in the y_axis_menu
         y_layout = self.y_axis_menu.layout()
+        self.y_axis_menu.setMinimumSize(400, 300)
         self.y_table_widget = QtWidgets.QTableWidget()
         self.y_table_widget.setColumnCount(4)
-        self.y_axis_menu.setMinimumSize(400, 300)
+        self.y_table_widget.setColumnWidth(0, 80)
+        self.y_table_widget.setColumnWidth(1, 170)
+        self.y_table_widget.setColumnWidth(2, 40)
+        self.y_table_widget.setColumnWidth(3, 30)
         y_layout.addWidget(self.y_table_widget)
         # Hide the numbers of rows/columns
         self.y_table_widget.verticalHeader().setVisible(False)
@@ -216,36 +224,35 @@ class GraphWindow(QWidget):
         self.plot.getAxis("left").label.setFont(labelFont)
 
     def add_entry_button_clicked(self, row):
-        #add a check box to display the graph or not
+        # add a check box to display the graph or not
         display_checkbox = QtWidgets.QCheckBox('Show')
         display_checkbox.stateChanged.connect(lambda state, row=row: self.update_plot_color(row, state))
         self.y_table_widget.setCellWidget(row, 0, display_checkbox)
 
-        #add a scroll menu to select quantity to display
+        # add a scroll menu to select quantity to display
         self.y_combobox = QtWidgets.QComboBox()
         self.y_combobox.addItems(self.log.data_dict.keys())
         self.y_combobox.currentIndexChanged.connect(self.fill_y_items)
         self.y_table_widget.setCellWidget(row, 1, self.y_combobox)
 
-        #add the colour of the corresponding line in the graph
+        # add the colour of the corresponding line in the graph
         self.line = QtWidgets.QFrame()
+        color_square = ColorSquare()
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.y_table_widget.setCellWidget(row, 2, self.line)
+        self.y_table_widget.setCellWidget(row, 2, self.line)#color_square)
 
-        #add the delete button
-        del_button = QtWidgets.QPushButton('Del')
+        # add the delete button
+        del_button = QtWidgets.QPushButton('X')
         del_button.clicked.connect(lambda state, row=row: self.del_button_clicked(row))
         self.y_table_widget.setCellWidget(row, 3, del_button)
 
-        #add the next add row button
+        # add the next add row button
         row = self.y_table_widget.rowCount()
         self.y_table_widget.insertRow(row)
         self.add_entry_button = QtWidgets.QPushButton('New')
         self.y_table_widget.setCellWidget(row, 0, self.add_entry_button)
         self.add_entry_button.clicked.connect(lambda state, row=row: self.add_entry_button_clicked(row))
 
-        #Attempt to resize the window lol
-        # self.resize_y_axis_menu()
 
     def del_button_clicked(self, row):
         self.y_table_widget.removeRow(row)
@@ -538,9 +545,6 @@ class QuantityChoiceWindow(QtWidgets.QDialog):
 
 
 
-
-
-
 class FileWindow(QtWidgets.QDialog):
     def __init__(self, log=None):
         super().__init__()
@@ -563,6 +567,25 @@ class FileWindow(QtWidgets.QDialog):
         self.log.config_dict["Saving"]['path'] = log_path
         self.accept()
 
+
+
+class ColorSquare(QWidget):
+    def __init__(self, initial_color=QColor(0, 0, 0), parent=None):
+        super().__init__(parent)
+        self.color = initial_color
+        self.setAutoFillBackground(True)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setBrush(self.color)
+        painter.drawRect(0, 0, self.width(), self.height())
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            new_color = QColorDialog.getColor(self.color, self, "Choose Color")
+            if new_color.isValid():
+                self.color = new_color
+                self.update()
 
 
 

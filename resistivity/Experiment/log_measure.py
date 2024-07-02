@@ -59,6 +59,13 @@ class LogMeasure:
         #Delete entries from instruments and data dictionnaries
         del self.config_dict["Measurements"][data_label]
 
+    def initialize_instruments(self):
+        for instrument in self.instruments_query.values():
+            instrument.initialize()
+
+    def finalize_instruments(self):
+        for instrument in self.instruments_query.values():
+            instrument.finalize()
 
     def get_values(self):
         while self.keep_running:
@@ -99,7 +106,6 @@ class LogMeasure:
             with open(filepath, 'a') as file:
                 line = ','.join(map(str, values)) + '\n'
                 file.write(line)
-
 
     def start_logging(self):
         self.keep_running = True

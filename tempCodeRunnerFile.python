@@ -1,0 +1,42 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QColorDialog
+from PyQt5.QtGui import QColor, QPainter
+from PyQt5.QtCore import Qt
+
+class ColorSquare(QWidget):
+    def __init__(self, initial_color=QColor(0, 0, 0), parent=None):
+        super().__init__(parent)
+        self.color = initial_color
+        self.setFixedSize(100, 100)
+        self.setAutoFillBackground(True)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setBrush(self.color)
+        painter.drawRect(0, 0, self.width(), self.height())
+        
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            new_color = QColorDialog.getColor(self.color, self, "Choose Color")
+            if new_color.isValid():
+                self.color = new_color
+                self.update()
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.color_square = ColorSquare()
+        layout = QVBoxLayout()
+        layout.addWidget(self.color_square)
+        
+        self.setLayout(layout)
+        self.setWindowTitle('Color Square Example')
+        self.show()
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_window = MainWindow()
+    sys.exit(app.exec_())
