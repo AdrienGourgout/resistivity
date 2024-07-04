@@ -40,14 +40,15 @@ class MainWindow(QMainWindow):
                             # more often because the monitor won't really refresh
                             # faster than 20 Hz, maybe twice faster.
         self.log.load_instruments()
+        self.log.initialize_instruments()
 
     def start_button_clicked(self):
-        self.log.initialize_instruments()
+        # self.log.initialize_instruments()
         self.log.start_logging()
 
     def stop_button_clicked(self):
         self.log.stop_logging()
-        self.log.finalize_instruments()
+        # self.log.finalize_instruments()
 
     def open_graph_window(self):
         self.window_graph_list.append(GraphWindow(self.log))

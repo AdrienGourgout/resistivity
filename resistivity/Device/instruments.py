@@ -21,20 +21,22 @@ class SynkTek(Instrument):
     channel_dict = {'A-V1':0, 'A-V2':1, 'B-V1':2, 'B-V2':3, 'C-V1':4,
                 'C-V2':5, 'D-V1':6, 'D-V2':7, 'E-V1':8, 'E-V2':9, 'A-I':10}
     quantities = ["R", "theta", "X", "Y", "DC"]
-    _is_first_instance = True
+    communicating = False
     from .MCLpy.MCL import MCL
     mcl = MCL()
 
     def __init__(self, address):
         self.address = address
-        if SynkTek._is_first_instance:
-            SynkTek._is_first_instance = False
 
     def initialize(self):
-        self.mcl.connect(self.address)
+        if not SynkTek.communicating:
+            self.mcl.connect(self.address)
+            SynkTek.communicating = True
 
     def finalize(self):
-        self.mcl.disconnect()
+        if SynkTek.communicating:
+            self.mcl.disconnect()
+            SynkTek.communicating = False
 
     def get_values(self, channel):
         # channel = channel.split("_")[0]
@@ -139,11 +141,11 @@ class PPMS(Instrument):
     channel_dict = {}
     quantities = ['Temperature','Field']
 
-    _is_first_instance = True
+    communicating = False
 
     import platform
     if platform.system() == 'Windows':
-        from .MultiPyVu import Server, Client
+        from MultiPyVu import Server, Client
         ppms_server = Server(port=6000)
         ppms_client = Client(port=6000)
 
@@ -152,22 +154,21 @@ class PPMS(Instrument):
         if self.address != 6000:
             print("The port needs to be 6000 at ESPCI")
             self.ppms_server.port = address
-        if PPMS._is_first_instance:
-            PPMS._is_first_instance = False
+            self.ppms_client.log_event
 
-    def __init__(self, address):
-        """
-        The port the works on the ESPCI PPMS is port = 6000
-        """
-        self.address = int(address)
 
     def initialize(self):
-        self.ppms_server.open()
-        self.ppms_client.open()
+        if not PPMS.communicating:
+            self.ppms_server.open()
+            self.ppms_client.open()
+            PPMS.communicating = True
+            self.ppms_client.log_event.shutdown() # turn off logging
 
     def finalize(self):
-        self.ppms_server.close()
-        self.ppms_client.close()
+        if PPMS.communicating:
+            self.ppms_client.close_client()
+            self.ppms_server.close()
+            PPMS.communicating = False
 
     def get_values(self, channel):
         temperature, status = self.ppms_client.get_temperature()
