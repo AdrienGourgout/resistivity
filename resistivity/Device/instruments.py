@@ -1,3 +1,5 @@
+from time import sleep
+
 class Instrument:
     """API for all the instruments"""
     channel_dict = {} # this are class attributes, accessible without declaring the object
@@ -61,6 +63,9 @@ class SynkTek(Instrument):
                   }
         return values
 
+    def switch_source(self, state):
+        self.mcl.config.output_A.outputenabled = state
+
 
 class LockinSR830(Instrument):
     channel_dict = {}
@@ -79,10 +84,11 @@ class LockinSR830(Instrument):
         self.sr830 = None
 
     def get_values(self, channel):
-        values = {'X': self.sr830.get_X,
-                  'Y': self.sr830.get_Y,
-                  'R': self.sr830.get_R,
-                  'theta': self.sr830.get_Theta}
+        values = {'X': self.sr830.get_X(),
+                  'Y': self.sr830.get_Y(),
+                  'R': self.sr830.get_R(),
+                  'theta': self.sr830.get_Theta()
+                  }
         return values
 
 
@@ -154,7 +160,6 @@ class PPMS(Instrument):
         if self.address != 6000:
             print("The port needs to be 6000 at ESPCI")
             self.ppms_server.port = address
-            self.ppms_client.log_event
 
 
     def initialize(self):
@@ -162,7 +167,8 @@ class PPMS(Instrument):
             self.ppms_server.open()
             self.ppms_client.open()
             PPMS.communicating = True
-            self.ppms_client.log_event.shutdown() # turn off logging
+            #self.ppms_client.log_event.shutdown() # turn off logging
+            self.ppms_client.log_event.remove()
 
     def finalize(self):
         if PPMS.communicating:
@@ -171,11 +177,21 @@ class PPMS(Instrument):
             PPMS.communicating = False
 
     def get_values(self, channel):
-        temperature, status = self.ppms_client.get_temperature()
-        field, status = self.ppms_client.get_field()
+        self.ppms_client.log_event.remove()
+        temperature, status_temperature = self.ppms_client.get_temperature()
+        sleep(0.5)
+        field, status_field = self.ppms_client.get_field()
+        if status_temperature == 'Stable':
+            status_temperature = 1
+        else:
+            status_temperature = 0
         values = {'Temperature': temperature,
-                  'Field': field}
+                  'StatusTemperature': status_temperature,
+                  'Field': field,
+                  'StatusField': status_field}
         return values
 
+    def set_temp(self, temperature, rate):
+        self.ppms_client.set_temperature(temperature, rate, self.ppms_client.temperature.approach_mode.fast_settle)
 
 

@@ -1,0 +1,9 @@
+2024-07-05 16:38:11,211     MultiVuServer        DEBUG    PPMS detected here:  ('C:\\QdPpms\\MultiVu\\PpmsMVu.exe', '14088')
+2024-07-05 16:38:11,212     MultiVuServer        INFO     Found PPMS running.
+2024-07-05 16:38:11,212     MultiVuServer        DEBUG    MultiPyVu Version: 2.2.0
+2024-07-05 16:45:58,427     MultiVuServer        DEBUG    PPMS detected here:  ('C:\\QdPpms\\MultiVu\\PpmsMVu.exe', '14088')
+2024-07-05 16:45:58,427     MultiVuServer        INFO     Found PPMS running.
+2024-07-05 16:45:58,427     MultiVuServer        DEBUG    MultiPyVu Version: 2.2.0
+2024-07-05 17:10:15,265     MultiVuServer        DEBUG    PPMS detected here:  ('C:\\QdPpms\\MultiVu\\PpmsMVu.exe', '14088')
+2024-07-05 17:10:15,265     MultiVuServer        INFO     Found PPMS running.
+2024-07-05 17:10:15,265     MultiVuServer        DEBUG    MultiPyVu Version: 2.2.0

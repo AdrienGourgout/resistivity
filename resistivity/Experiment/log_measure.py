@@ -5,6 +5,7 @@ import threading
 import os
 import yaml
 import inspect
+from .seebeck import Seebeck
 
 
 class LogMeasure:
@@ -12,12 +13,18 @@ class LogMeasure:
         self.config_file     = config_file
         self.config_dict     = {}
         self.keep_running    = False
+        self.seq_running     = False
         self.saving          = False
         self.instruments_query = {}
-        self.time_steps      = 0.5 # seconds
+        self.time_steps      = 1 # seconds
         ## Dictionnary for the data
         self.data_dict = {}
-        self.data_dict['Time'] = np.empty(0)
+        self.data_dict['Time']   = np.empty(0)
+        self.data_dict['S_AC']   = np.empty(0)
+        self.data_dict['dT_AC']  = np.empty(0)
+        self.data_dict['Phi_dT'] = np.empty(0)
+        self.data_dict['Phi_VS'] = np.empty(0)
+        self.data_dict['dPhi']   = np.empty(0)
         # Get the names of all the classes of instruments in this module
         self.instruments_names = [name for name, obj in inspect.getmembers(instruments) if isinstance(obj, type)]
         self.instruments_names.remove("Instrument") # this is the API
@@ -83,6 +90,18 @@ class LogMeasure:
             if self.saving:
                 self.save_log()
             ## Sets how long each steps takes
+            data = {}
+            for key, values in self.data_dict.items():
+                if key not in ['S_AC','dT_AC', 'Phi_dT', 'Phi_VS', 'dPhi'] :
+                    data[key] = values[-1]
+            seebeck_obj = Seebeck(data)
+            seebeck_obj.analysis_ac()
+            data = seebeck_obj.data
+            self.data_dict['S_AC'] = np.append(self.data_dict['S_AC'], data['S_AC'])
+            self.data_dict['dT_AC'] = np.append(self.data_dict['dT_AC'], data['dT_AC'])
+            self.data_dict['Phi_dT'] = np.append(self.data_dict['Phi_dT'], data['Phi_dT'])
+            self.data_dict['Phi_VS'] = np.append(self.data_dict['Phi_VS'], data['Phi_VS'])
+            self.data_dict['dPhi'] = np.append(self.data_dict['dPhi'], data['dPhi'])
             sleep(self.time_steps)
 
 
@@ -112,6 +131,11 @@ class LogMeasure:
         self.log_thread = threading.Thread(target=self.get_values)
         self.log_thread.start()
 
+        if self.seq_running == False:
+            self.seq_thread = threading.Thread(target=self.sequence)
+            self.seq_thread.start()
+            self.seq_running = True
+
     def stop_logging(self):
         self.keep_running = False
 
@@ -119,18 +143,37 @@ class LogMeasure:
         for keys in self.data_dict:
             self.data_dict[keys] = np.empty(0)
 
-
-
-if __name__ == "__main__":
-    log = LogMeasure('../../Example/Config.yml')
-    log.load_config()
-    log.load_instruments()
-
-    log.start_logging()
-    print(log.data_dict)
-    sleep(10)
-    print(log.data_dict)
-    log.stop_logging()
+    def sequence(self):
+        t_list = self.config_dict['Sequence']['steps']
+        rate = self.config_dict['Sequence']['rate']
+        sleep(2)
+        for temp in t_list:
+            # Change temperature
+            self.stop_logging()
+            sleep(2)
+            self.instruments_query['Temperature'].set_temp(temp,rate)
+            self.instruments_query['VS'].switch_source(False)
+            sleep(2)
+            self.start_logging()
+            sleep(2)
+            self.saving = False
+            # Wait for PPMS temperature to get stable
+            status = self.data_dict['Temperature_StatusTemperature'][-1]
+            while status != 1:
+                sleep(1)
+                status = self.data_dict['Temperature_StatusTemperature'][-1]
+            # Save Heat OFF
+            self.saving = True
+            sleep(180)
+            # Turn on Heat
+            self.saving = False
+            self.instruments_query['VS'].switch_source(True)
+            sleep(20)
+            # Save Heat ON
+            self.saving = True
+            sleep(180)
+            # Turn off heat
+            self.instruments_query['VS'].switch_source(False)
 
 
 
